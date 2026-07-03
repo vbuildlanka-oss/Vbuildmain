@@ -347,7 +347,7 @@ function Index() {
 
           <div className="mx-auto mt-14 max-w-7xl space-y-20 px-5 pb-24 md:px-10 md:pb-36">
             {projects.map((p, i) => (
-              <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} data-reveal className="group block lg:grid lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16" style={{ direction: i % 2 === 1 ? "rtl" : "ltr" }}>
+              <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} className="group block lg:grid lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16" style={{ direction: i % 2 === 1 ? "rtl" : "ltr" }}>
                 <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted lg:aspect-[4/3]" style={{ direction: "ltr" }}>
                   <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 lg:opacity-80 lg:grayscale lg:group-hover:grayscale-0" />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent lg:from-transparent" />
