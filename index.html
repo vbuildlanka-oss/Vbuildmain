@@ -17,8 +17,120 @@
     <link rel="preconnect" href="https://my.spline.design" crossorigin />
     <link rel="dns-prefetch" href="https://my.spline.design" />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      /* Loading screen — renders instantly before any JS */
+      #loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: oklch(0.09 0.024 275);
+        transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0.6s;
+      }
+      #loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .loader-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+      }
+      /* Logo mark container */
+      .loader-logo {
+        position: relative;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        overflow: hidden;
+        box-shadow: 0 0 40px -8px oklch(0.77 0.15 210 / 40%);
+        animation: loader-pulse 2s ease-in-out infinite;
+      }
+      .loader-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      /* Glow ring around logo */
+      .loader-ring {
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        border-top-color: oklch(0.77 0.15 210);
+        animation: loader-spin 1.2s linear infinite;
+      }
+      /* Brand text */
+      .loader-text {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        color: oklch(0.97 0.008 250);
+        opacity: 0;
+        animation: loader-fade-in 0.8s ease-out 0.3s forwards;
+      }
+      /* Progress bar */
+      .loader-bar {
+        width: 120px;
+        height: 2px;
+        border-radius: 2px;
+        background: oklch(0.92 0.02 260 / 13%);
+        overflow: hidden;
+        opacity: 0;
+        animation: loader-fade-in 0.5s ease-out 0.6s forwards;
+      }
+      .loader-bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 2px;
+        background: linear-gradient(90deg, oklch(0.77 0.15 210), oklch(0.73 0.2 315));
+        animation: loader-progress 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s forwards;
+      }
+
+      @keyframes loader-pulse {
+        0%, 100% { box-shadow: 0 0 40px -8px oklch(0.77 0.15 210 / 40%); transform: scale(1); }
+        50% { box-shadow: 0 0 60px -4px oklch(0.77 0.15 210 / 60%); transform: scale(1.04); }
+      }
+      @keyframes loader-spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes loader-fade-in {
+        to { opacity: 1; }
+      }
+      @keyframes loader-progress {
+        0% { width: 0%; }
+        60% { width: 70%; }
+        100% { width: 100%; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .loader-logo, .loader-ring, .loader-text, .loader-bar, .loader-bar-fill {
+          animation: none !important;
+          opacity: 1;
+        }
+        .loader-bar-fill { width: 100%; }
+      }
+    </style>
   </head>
   <body>
+    <!-- Loading screen — visible instantly, dismissed by React -->
+    <div id="loader" aria-label="Loading VBUILD">
+      <div class="loader-inner">
+        <div class="loader-logo">
+          <div class="loader-ring"></div>
+          <img src="/vbuild-mark.jpeg" alt="" width="72" height="72" />
+        </div>
+        <p class="loader-text">VBUILD</p>
+        <div class="loader-bar">
+          <div class="loader-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
