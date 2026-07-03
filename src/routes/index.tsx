@@ -270,7 +270,7 @@ function Index() {
             {projects.map((p) => (
               <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} className="group block">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted">
-                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover opacity-70 grayscale transition-[filter,opacity,transform] duration-700 group-hover:opacity-100 group-hover:grayscale-0" />
+                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 active:scale-[1.02]" />
                 </div>
                 <div className="mt-5">
                   <h3 className="font-display text-2xl font-medium tracking-[-0.03em]">{p.title}</h3>
