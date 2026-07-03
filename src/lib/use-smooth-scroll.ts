@@ -8,11 +8,18 @@ export function useSmoothScroll() {
     if (typeof window === "undefined") return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.registerPlugin(ScrollTrigger);
-    const lenis = new Lenis({ duration: 1.15, smoothWheel: !reduceMotion });
+
+    const lenis = new Lenis({
+      duration: 1.4,
+      smoothWheel: !reduceMotion,
+      lerp: 0.08,
+    });
+
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.lagSmoothing(0);
+
     return () => {
       gsap.ticker.remove(onTick);
       lenis.destroy();

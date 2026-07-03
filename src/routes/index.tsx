@@ -78,6 +78,7 @@ function SplineEmbed() {
 
 function Index() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
@@ -86,29 +87,110 @@ function Index() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.registerPlugin(ScrollTrigger);
 
-    const lenis = new Lenis({ duration: 1.15, smoothWheel: !reduceMotion, smoothTouch: false } as any);
+    const lenis = new Lenis({ duration: 1.4, smoothWheel: !reduceMotion, smoothTouch: false, lerp: 0.08 } as any);
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.lagSmoothing(0);
 
     const context = gsap.context(() => {
-      // Hero (untouched visuals; intro entrance only)
-      gsap.from("[data-hero-item]", { opacity: 0, y: 24, duration: 1.1, stagger: 0.12, ease: "power2.out", delay: 0.2 });
+      // === HERO ENTRANCE — cinematic stagger ===
+      const tl = gsap.timeline({ delay: 0.4 });
+      tl.from("[data-hero-item]", {
+        opacity: 0, y: 40, duration: 1.2, stagger: 0.15, ease: "power3.out",
+      });
+
       if (!reduceMotion) {
-        gsap.to("[data-spline]", { yPercent: 7, ease: "none", scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1.2 } });
-        gsap.to("[data-hero-copy]", { yPercent: -8, opacity: 0.25, ease: "none", scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1 } });
+        // Parallax: spline drifts up, hero copy drifts down as you scroll away
+        gsap.to("[data-spline]", { yPercent: 12, ease: "none", scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1.5 } });
+        gsap.to("[data-hero-copy]", { yPercent: -12, opacity: 0, ease: "none", scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1 } });
+
+        // === HEADER — hide on scroll down, show on scroll up ===
+        let lastScrollY = 0;
+        ScrollTrigger.create({
+          trigger: "body",
+          start: "top top",
+          end: "max",
+          onUpdate: (self) => {
+            const header = headerRef.current;
+            if (!header) return;
+            const scrollY = self.scroll();
+            if (scrollY > 100) {
+              if (scrollY > lastScrollY) {
+                gsap.to(header, { y: -100, duration: 0.4, ease: "power2.inOut" });
+              } else {
+                gsap.to(header, { y: 0, duration: 0.3, ease: "power2.out" });
+              }
+            } else {
+              gsap.set(header, { y: 0 });
+            }
+            lastScrollY = scrollY;
+          },
+        });
+
+        // === SECTION HEADINGS — clip reveal from bottom ===
+        gsap.utils.toArray<HTMLElement>("[data-heading-reveal]").forEach((el) => {
+          gsap.from(el, {
+            clipPath: "inset(100% 0% 0% 0%)",
+            opacity: 0,
+            duration: 1,
+            ease: "power3.out",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          });
+        });
+
+        // === IMAGE REVEALS — scale + clip from center ===
+        gsap.utils.toArray<HTMLElement>("[data-image-reveal]").forEach((el) => {
+          gsap.from(el, {
+            clipPath: "inset(8% 8% 8% 8%)",
+            scale: 1.08,
+            opacity: 0,
+            duration: 1.2,
+            ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 85%", once: true },
+          });
+        });
+
+        // === PARALLAX on images ===
+        gsap.utils.toArray<HTMLElement>("[data-parallax]").forEach((el) => {
+          gsap.to(el, {
+            yPercent: -8,
+            ease: "none",
+            scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 1.5 },
+          });
+        });
+
+        // === LINE DRAW — horizontal rules animate width ===
+        gsap.utils.toArray<HTMLElement>("[data-line-draw]").forEach((el) => {
+          gsap.from(el, {
+            scaleX: 0,
+            transformOrigin: "left center",
+            duration: 1.2,
+            ease: "power2.inOut",
+            scrollTrigger: { trigger: el, start: "top 90%", once: true },
+          });
+        });
       }
 
+      // === STANDARD REVEALS — improved with slight rotation ===
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 24, duration: 0.85, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 85%", once: true } });
+        gsap.from(el, {
+          opacity: 0, y: reduceMotion ? 0 : 32, rotateX: reduceMotion ? 0 : 4,
+          duration: 0.9, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 85%", once: true },
+        });
       });
 
+      // === STAGGER GROUPS — scale in with spring feel ===
       gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
-        gsap.from(group.children, { opacity: 0, y: reduceMotion ? 0 : 60, duration: 0.8, stagger: 0.08, ease: "power3.out", scrollTrigger: { trigger: group, start: "top 85%", once: true } });
+        gsap.from(group.children, {
+          opacity: 0, y: reduceMotion ? 0 : 50, scale: reduceMotion ? 1 : 0.95,
+          duration: 0.7, stagger: 0.1, ease: "back.out(1.2)",
+          scrollTrigger: { trigger: group, start: "top 85%", once: true },
+        });
       });
 
-      // Horizontal pinned scroll (desktop only)
+      // === HORIZONTAL PINNED SCROLL — desktop only ===
       const mm = gsap.matchMedia();
       mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
         const track = document.querySelector<HTMLElement>("[data-work-track]");
@@ -122,12 +204,44 @@ function Index() {
             trigger: wrap,
             start: "top top",
             end: () => `+=${distance()}`,
-            scrub: 1,
+            scrub: 1.5,
             pin: true,
             invalidateOnRefresh: true,
           },
         });
+
+        // Cards within track get a subtle rotation + parallax
+        gsap.utils.toArray<HTMLElement>("[data-work-card]").forEach((card, i) => {
+          gsap.from(card, {
+            rotateY: 4,
+            scale: 0.96,
+            opacity: 0.7,
+            duration: 1,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: wrap,
+              start: () => `top+=${i * 300} top`,
+              end: () => `top+=${i * 300 + 500} top`,
+              scrub: 1,
+            },
+          });
+        });
       });
+
+      // === MARQUEE SPEED VARIATION — slow on scroll ===
+      const marquee = document.querySelector<HTMLElement>(".vbuild-marquee");
+      if (marquee && !reduceMotion) {
+        ScrollTrigger.create({
+          trigger: marquee,
+          start: "top bottom",
+          end: "bottom top",
+          onUpdate: (self) => {
+            const speed = 1 + self.progress * 0.5;
+            marquee.style.animationDuration = `${38 / speed}s`;
+          },
+        });
+      }
+
     }, rootRef);
 
     const refresh = () => ScrollTrigger.refresh();
@@ -154,7 +268,7 @@ function Index() {
 
   return (
     <div ref={rootRef} className="min-h-screen overflow-x-clip bg-background text-foreground selection:bg-primary/30">
-      <header className="fixed inset-x-0 top-0 z-50 mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 md:flex md:justify-between md:px-10 md:py-5">
+      <header ref={headerRef} className="fixed inset-x-0 top-0 z-50 mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 md:flex md:justify-between md:px-10 md:py-5">
         <a href="#top" aria-label="VBUILD home" className="glass-panel flex h-12 items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4">
           <span className="flex h-9 w-11 items-center justify-center overflow-hidden rounded-full bg-background">
             <img src={logoImage} alt="" className="h-full w-full object-cover" />
@@ -214,11 +328,11 @@ function Index() {
           <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
             <div data-reveal>
               <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">About</p>
-              <h2 className="max-w-4xl font-display text-4xl font-medium leading-[1.05] tracking-[-0.045em] md:text-7xl">Small by design.<br /><span className="text-muted-foreground">Ambitious by nature.</span></h2>
+              <h2 className="max-w-4xl font-display text-4xl font-medium leading-[1.05] tracking-[-0.045em] md:text-7xl" data-heading-reveal>Small by design.<br /><span className="text-muted-foreground">Ambitious by nature.</span></h2>
               <p className="mt-8 max-w-xl text-lg leading-8 text-muted-foreground">VBUILD partners with forward-thinking teams to turn complex ideas into clear, useful products. Strategy, design, and engineering work as one — from the first sketch to production.</p>
             </div>
             <article data-reveal className="glass-panel overflow-hidden rounded-3xl p-3">
-              <img src={founderImage} alt="Portrait of Lathurshan Muralitharan, founder of VBUILD" loading="lazy" width={1254} height={1254} className="aspect-[4/3] w-full rounded-2xl object-cover object-[center_38%]" />
+              <img src={founderImage} alt="Portrait of Lathurshan Muralitharan, founder of VBUILD" loading="lazy" width={1254} height={1254} className="aspect-[4/3] w-full rounded-2xl object-cover object-[center_38%]" data-image-reveal data-parallax />
               <div className="flex items-end justify-between gap-6 p-5 md:p-7">
                 <div><p className="font-display text-xl font-semibold">Lathurshan Muralitharan</p><p className="mt-1 text-sm text-muted-foreground">Founder, VBUILD</p></div>
                 <p className="max-w-48 text-right text-xs leading-5 text-muted-foreground">Computer Science Graduate<br />University of Waterloo</p>
@@ -233,7 +347,7 @@ function Index() {
             <div data-reveal className="mb-14 grid gap-8 lg:grid-cols-[1fr_.55fr] lg:items-end">
               <div>
                 <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Services</p>
-                <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">Built end to end.</h2>
+                <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl" data-heading-reveal>Built end to end.</h2>
               </div>
               <p className="max-w-sm text-sm leading-6 text-muted-foreground">One focused studio across experience, intelligence, and infrastructure. Tap a service to see how we approach it.</p>
             </div>
@@ -261,7 +375,7 @@ function Index() {
           <div className="px-5 pt-24 md:px-10 md:pt-36">
             <div data-reveal className="mx-auto max-w-7xl">
               <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Selected work</p>
-              <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">Systems with a point of view.</h2>
+              <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl" data-heading-reveal>Systems with a point of view.</h2>
             </div>
           </div>
 
@@ -289,6 +403,7 @@ function Index() {
                   key={p.slug}
                   to="/work/$slug"
                   params={{ slug: p.slug }}
+                  data-work-card
                   className="group relative block h-[70vh] w-[60vw] shrink-0 overflow-hidden rounded-3xl border border-border bg-card/30"
                 >
                   <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="absolute inset-0 h-full w-full object-cover opacity-65 grayscale transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 group-hover:grayscale-0" />
@@ -313,7 +428,7 @@ function Index() {
           <div className="mx-auto max-w-7xl">
             <div data-reveal className="mb-14 max-w-3xl">
               <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Process</p>
-              <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">A clear path, every time.</h2>
+              <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl" data-heading-reveal>A clear path, every time.</h2>
             </div>
             <ol data-stagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {process.map((p, i) => (
@@ -347,7 +462,7 @@ function Index() {
           <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[.4fr_1fr]">
             <div data-reveal>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">FAQ</p>
-              <h2 className="mt-6 font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">Good questions.</h2>
+              <h2 className="mt-6 font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl" data-heading-reveal>Good questions.</h2>
             </div>
             <Accordion data-reveal type="single" collapsible className="w-full">
               {faqs.map((f, i) => (
@@ -370,7 +485,7 @@ function Index() {
           <div data-reveal className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Have a challenge in mind?</p>
-              <h2 className="mt-7 max-w-4xl font-display text-5xl font-medium tracking-[-0.055em] md:text-8xl">Let's build what's next.</h2>
+              <h2 className="mt-7 max-w-4xl font-display text-5xl font-medium tracking-[-0.055em] md:text-8xl" data-heading-reveal>Let's build what's next.</h2>
               <p className="mt-6 max-w-md text-base leading-7 text-muted-foreground">Tell us where you're headed. We'll bring focus, engineering, and momentum.</p>
               <p className="mt-4 text-sm text-muted-foreground">Or email <a href="mailto:hello@vbuild.dev" className="text-foreground underline-offset-4 hover:underline">hello@vbuild.dev</a></p>
             </div>
@@ -378,6 +493,7 @@ function Index() {
           </div>
 
           <footer className="mx-auto mt-24 grid max-w-7xl gap-6 border-t border-border pt-7 text-xs text-muted-foreground sm:grid-cols-3">
+            <div data-line-draw className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent sm:hidden" />
             <p>&copy; 2026 VBUILD. All rights reserved.</p>
             <p className="sm:text-center">Toronto, Canada &middot; Working globally</p>
             <div className="flex items-center gap-5 sm:justify-end">

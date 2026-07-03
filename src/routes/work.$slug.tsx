@@ -29,9 +29,51 @@ function WorkDetail() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
+      // Page entrance — stagger from top
+      const tl = gsap.timeline({ delay: 0.15 });
+      tl.from("[data-page-intro]", {
+        opacity: 0, y: reduceMotion ? 0 : 50, duration: 0.9, stagger: 0.12, ease: "power3.out",
+      });
+
+      // Image reveal with clip
+      if (!reduceMotion) {
+        gsap.from("[data-hero-image]", {
+          clipPath: "inset(6% 6% 6% 6%)",
+          scale: 1.05,
+          duration: 1.3,
+          ease: "power2.out",
+          scrollTrigger: { trigger: "[data-hero-image]", start: "top 85%", once: true },
+        });
+
+        // Parallax on hero image
+        const heroImg = document.querySelector("[data-hero-image] img");
+        if (heroImg) {
+          gsap.to(heroImg, {
+            yPercent: -6,
+            ease: "none",
+            scrollTrigger: { trigger: "[data-hero-image]", start: "top bottom", end: "bottom top", scrub: 1.5 },
+          });
+        }
+      }
+
+      // Scroll reveals with stagger per section
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 24, duration: 0.8, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+        gsap.from(el, {
+          opacity: 0, y: reduceMotion ? 0 : 30, rotateX: reduceMotion ? 0 : 3,
+          duration: 0.85, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%", once: true },
+        });
+      });
+
+      // Stack tags cascade
+      gsap.utils.toArray<HTMLElement>("[data-cascade] > *").forEach((el, i) => {
+        gsap.from(el, {
+          opacity: 0, x: reduceMotion ? 0 : -12, scale: 0.9,
+          duration: 0.5, delay: i * 0.04, ease: "back.out(1.5)",
+          scrollTrigger: { trigger: el.parentElement!, start: "top 88%", once: true },
+        });
       });
     }, rootRef);
     return () => ctx.revert();
@@ -51,14 +93,14 @@ function WorkDetail() {
       </header>
 
       <main className="mx-auto max-w-7xl px-5 py-20 md:px-10 md:py-32">
-        <section data-reveal className="max-w-4xl">
+        <section data-page-intro className="max-w-4xl">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Selected work</p>
           <h1 className="mt-6 font-display text-5xl font-medium leading-[1.02] tracking-[-0.05em] md:text-8xl">{project.title}</h1>
           <p className="mt-8 max-w-2xl text-lg leading-8 text-muted-foreground">{project.copy}</p>
         </section>
 
-        <section data-reveal className="mt-16 overflow-hidden rounded-3xl border border-border">
-          <img src={project.image} alt={project.title} loading="lazy" width={1280} height={768} className="aspect-[16/9] w-full object-cover" />
+        <section data-hero-image className="mt-16 overflow-hidden rounded-3xl border border-border">
+          <img src={project.image} alt={project.title} loading="lazy" width={1280} height={768} className="aspect-[16/9] w-full object-cover will-change-transform" />
         </section>
 
         <section className="mt-20 grid gap-12 lg:grid-cols-3">
@@ -78,7 +120,7 @@ function WorkDetail() {
 
         <section data-reveal className="mt-20 border-t border-border pt-12">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Stack</p>
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="mt-6 flex flex-wrap gap-2" data-cascade>
             {project.stack.map((t: string) => (
               <span key={t} className="rounded-full border border-border bg-card/40 px-4 py-2 text-xs text-foreground">{t}</span>
             ))}
