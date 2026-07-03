@@ -29,14 +29,30 @@ function ServiceDetail() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
-      // Page entrance: title area slides up first
+      if (reduceMotion) return;
+      // Page entrance
       gsap.from("[data-page-hero]", {
-        opacity: 0, y: reduceMotion ? 0 : 30, duration: 1, ease: "power3.out", delay: 0.1,
+        opacity: 0, y: 50, duration: 1.2, ease: "expo.out", delay: 0.15,
       });
-      // Remaining sections reveal on scroll
+      // Headings clip reveal
+      gsap.utils.toArray<HTMLElement>("h1, h2").forEach((el) => {
+        gsap.fromTo(el,
+          { clipPath: "inset(0 0 100% 0)" },
+          { clipPath: "inset(0 0 0% 0)", duration: 1, ease: "power3.inOut",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true } }
+        );
+      });
+      // Scroll reveals
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 20, duration: 0.85, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+        gsap.from(el, { opacity: 0, y: 30, duration: 0.9, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+      });
+      // List items cascade
+      gsap.utils.toArray<HTMLElement>("ul li, ol li").forEach((el, i) => {
+        gsap.from(el, { opacity: 0, x: -20, duration: 0.6, delay: i * 0.04, ease: "power2.out",
+          scrollTrigger: { trigger: el.parentElement!, start: "top 88%", once: true } });
       });
     }, rootRef);
     return () => ctx.revert();

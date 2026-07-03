@@ -26,6 +26,7 @@ const process = [
 
 const SPLINE_URL = "https://my.spline.design/aibrain-VnvsW1OxElArh6zfIspyafuH/";
 
+
 /**
  * Deferred Spline embed — optimized for scroll performance.
  * 1. Waits for idle time before inserting the iframe.
@@ -78,6 +79,7 @@ function SplineEmbed() {
         <div className="h-full w-full animate-pulse bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
       </div>
 
+
       {/* Iframe — deferred, pointer-events disabled, hidden when off-screen */}
       {shouldLoad && (
         <iframe
@@ -98,6 +100,7 @@ function SplineEmbed() {
   );
 }
 
+
 function Index() {
   const rootRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -109,78 +112,149 @@ function Index() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.registerPlugin(ScrollTrigger);
 
-    // Lenis: slightly longer duration for that premium weight
-    const lenis = new Lenis({ duration: 1.3, smoothWheel: !reduceMotion, smoothTouch: false } as any);
+    // LENIS — luxurious, weighted scroll feel
+    const lenis = new Lenis({ duration: 1.5, smoothWheel: !reduceMotion, smoothTouch: false } as any);
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.lagSmoothing(0);
 
     const context = gsap.context(() => {
-      // === HERO ENTRANCE — slower, more cinematic stagger ===
-      gsap.from("[data-hero-item]", {
-        opacity: 0, y: 32, duration: 1.3, stagger: 0.18, ease: "power3.out", delay: 0.3,
+      if (reduceMotion) return; // Skip all animations if user prefers reduced motion
+
+      // === HERO — cinematic timeline entrance ===
+      const heroTl = gsap.timeline({ delay: 0.35 });
+      heroTl
+        .from("[data-hero-item]", {
+          opacity: 0, y: 50, duration: 1.4, stagger: 0.2, ease: "expo.out",
+        })
+        .from("[data-hero-item] .h-px", { scaleX: 0, transformOrigin: "left", duration: 0.8, ease: "power2.inOut" }, 0.3);
+
+      // Hero text parallax on scroll (lightweight, text only)
+      gsap.to("[data-hero-copy]", {
+        yPercent: -15, opacity: 0, ease: "none",
+        scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: true },
       });
 
-      if (!reduceMotion) {
-        // Hero text drifts up + fades as user scrolls away
-        gsap.to("[data-hero-copy]", {
-          yPercent: -10, opacity: 0.15, ease: "none",
-          scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1 },
-        });
 
-        // === HEADER — subtle background reveal on scroll ===
-        ScrollTrigger.create({
-          trigger: "[data-hero]",
-          start: "60px top",
-          onEnter: () => headerRef.current?.classList.add("header-scrolled"),
-          onLeaveBack: () => headerRef.current?.classList.remove("header-scrolled"),
-        });
-      }
+      // === HEADER — glass morphism on scroll ===
+      ScrollTrigger.create({
+        trigger: "[data-hero]",
+        start: "80px top",
+        onEnter: () => headerRef.current?.classList.add("header-scrolled"),
+        onLeaveBack: () => headerRef.current?.classList.remove("header-scrolled"),
+      });
 
-      // === SECTION REVEALS — elements already visible, slide up gently ===
+      // === SECTION LABELS — the small "About", "Services" etc labels ===
+      gsap.utils.toArray<HTMLElement>("[data-reveal] p:first-child, [data-reveal] > p").forEach((el) => {
+        if (el.classList.contains("text-xs") && el.textContent && el.textContent.length < 30) {
+          gsap.from(el, {
+            x: -20, opacity: 0, duration: 0.7, ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 92%", once: true },
+          });
+        }
+      });
+
+      // === HEADINGS — clip-path wipe reveal ===
+      gsap.utils.toArray<HTMLElement>("h2").forEach((el) => {
+        gsap.fromTo(el,
+          { clipPath: "inset(0 0 100% 0)" },
+          { clipPath: "inset(0 0 0% 0)", duration: 1.1, ease: "power3.inOut",
+            scrollTrigger: { trigger: el, start: "top 85%", once: true },
+          }
+        );
+      });
+
+      // === PARAGRAPHS & TEXT BLOCKS — gentle fade up ===
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
         gsap.from(el, {
-          opacity: 0, y: reduceMotion ? 0 : 20, duration: 0.9, ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          opacity: 0, y: 30, duration: 1, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 90%", once: true },
         });
       });
 
-      // === STAGGER GROUPS — cards slide up with spring ===
+
+      // === SERVICE CARDS — stagger with scale spring ===
       gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
         gsap.from(group.children, {
-          opacity: 0, y: reduceMotion ? 0 : 40, duration: 0.75, stagger: 0.1, ease: "power3.out",
+          opacity: 0, y: 50, scale: 0.95, duration: 0.8, stagger: 0.12, ease: "back.out(1.4)",
           scrollTrigger: { trigger: group, start: "top 88%", once: true },
         });
       });
 
-      // === HORIZONTAL SCROLL (desktop) ===
-      const mm = gsap.matchMedia();
-      mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
-        const track = document.querySelector<HTMLElement>("[data-work-track]");
-        const wrap = document.querySelector<HTMLElement>("[data-work-wrap]");
-        if (!track || !wrap) return;
-        const distance = () => track.scrollWidth - window.innerWidth + 80;
-        gsap.to(track, {
-          x: () => -distance(),
-          ease: "none",
-          scrollTrigger: {
-            trigger: wrap,
-            start: "top top",
-            end: () => `+=${distance()}`,
-            scrub: 1,
-            pin: true,
-            invalidateOnRefresh: true,
-          },
+      // === WORK SECTION — NO PIN, just beautiful scroll-linked motion ===
+      // Desktop: cards have parallax speed difference as you scroll
+      gsap.utils.toArray<HTMLElement>("[data-work-card]").forEach((card, i) => {
+        gsap.from(card, {
+          y: 60 + i * 20, opacity: 0.4, scale: 0.96,
+          duration: 1, ease: "power2.out",
+          scrollTrigger: { trigger: card, start: "top 95%", once: true },
+        });
+        // Subtle continuous parallax
+        gsap.to(card.querySelector("img"), {
+          yPercent: -8, ease: "none",
+          scrollTrigger: { trigger: card, start: "top bottom", end: "bottom top", scrub: true },
         });
       });
 
-      // === CONTACT CTA — slight scale on scroll into view ===
+      // === PROCESS CARDS — cascade with rotation ===
+      const processCards = document.querySelectorAll("[data-stagger] li, [data-stagger] > a");
+      processCards.forEach((card, i) => {
+        gsap.from(card, {
+          opacity: 0, y: 40, rotationY: 5 * (i % 2 === 0 ? 1 : -1), scale: 0.94,
+          duration: 0.9, ease: "power3.out",
+          scrollTrigger: { trigger: card, start: "top 90%", once: true },
+        });
+      });
+
+
+      // === FOUNDER IMAGE — scale reveal ===
+      const founderImg = document.querySelector("[data-reveal] article img");
+      if (founderImg) {
+        gsap.from(founderImg, {
+          scale: 1.15, duration: 1.5, ease: "power2.out",
+          scrollTrigger: { trigger: founderImg, start: "top 85%", once: true },
+        });
+      }
+
+      // === MARQUEE — speed up on scroll proximity ===
+      const marquee = document.querySelector<HTMLElement>(".vbuild-marquee");
+      if (marquee) {
+        ScrollTrigger.create({
+          trigger: marquee.parentElement!,
+          start: "top bottom",
+          end: "bottom top",
+          onUpdate: (self) => {
+            marquee.style.animationDuration = `${38 - self.progress * 18}s`;
+          },
+        });
+      }
+
+      // === FAQ — accordion items stagger in ===
+      const faqItems = document.querySelectorAll("[data-reveal] [data-radix-collection-item]");
+      if (faqItems.length) {
+        gsap.from(faqItems, {
+          opacity: 0, x: 30, duration: 0.7, stagger: 0.08, ease: "power2.out",
+          scrollTrigger: { trigger: faqItems[0]?.parentElement, start: "top 85%", once: true },
+        });
+      }
+
+      // === CONTACT CTA — dramatic entrance ===
       const cta = document.querySelector("[data-cta-section]");
-      if (cta && !reduceMotion) {
+      if (cta) {
         gsap.from(cta, {
-          scale: 0.97, duration: 0.8, ease: "power2.out",
+          y: 40, scale: 0.96, opacity: 0, duration: 1.2, ease: "power3.out",
           scrollTrigger: { trigger: cta, start: "top 90%", once: true },
+        });
+      }
+
+
+      // === FOOTER — items slide up ===
+      const footerItems = document.querySelectorAll("footer > *");
+      if (footerItems.length) {
+        gsap.from(footerItems, {
+          opacity: 0, y: 15, duration: 0.6, stagger: 0.1, ease: "power2.out",
+          scrollTrigger: { trigger: "footer", start: "top 95%", once: true },
         });
       }
 
@@ -207,6 +281,7 @@ function Index() {
   const openWhatsApp = () => window.open("https://wa.me/94719802526", "_blank", "noopener,noreferrer");
 
   const navLinks: [string, string][] = [["Services", "#services"], ["Work", "#work"], ["Process", "#process"], ["FAQ", "#faq"]];
+
 
   return (
     <div ref={rootRef} className="min-h-screen overflow-x-clip bg-background text-foreground selection:bg-primary/30">
@@ -246,6 +321,7 @@ function Index() {
         </Sheet>
       </header>
 
+
       <main>
         {/* HERO */}
         <section id="top" data-hero className="relative flex min-h-screen items-center overflow-hidden px-5 pt-24 md:px-10">
@@ -265,6 +341,7 @@ function Index() {
           </div>
         </section>
 
+
         {/* ABOUT / FOUNDER */}
         <section id="about" className="section-rule px-5 py-24 md:px-10 md:py-36">
           <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
@@ -282,6 +359,7 @@ function Index() {
             </article>
           </div>
         </section>
+
 
         {/* SERVICES */}
         <section id="services" className="section-rule px-5 py-24 md:px-10 md:py-36">
@@ -312,57 +390,35 @@ function Index() {
           </div>
         </section>
 
+
         {/* SELECTED WORK */}
-        <section id="work" className="section-rule">
-          <div className="px-5 pt-24 md:px-10 md:pt-36">
-            <div data-reveal className="mx-auto max-w-7xl">
+        <section id="work" className="section-rule px-5 py-24 md:px-10 md:py-36">
+          <div className="mx-auto max-w-7xl">
+            <div data-reveal className="mb-14">
               <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Selected work</p>
               <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">Systems with a point of view.</h2>
             </div>
-          </div>
-
-          {/* Mobile / tablet vertical stack */}
-          <div className="mx-auto mt-14 max-w-7xl space-y-12 px-5 pb-24 md:px-10 md:pb-36 lg:hidden">
-            {projects.map((p) => (
-              <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} className="group block">
-                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted">
-                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 active:scale-[1.02]" />
-                </div>
-                <div className="mt-5">
-                  <h3 className="font-display text-2xl font-medium tracking-[-0.03em]">{p.title}</h3>
-                  <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">{p.copy}</p>
-                  <p className="mt-4 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{p.tags.join(" · ")}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* Desktop horizontal pinned scroll */}
-          <div data-work-wrap className="relative mt-16 hidden h-screen overflow-hidden lg:block">
-            <div data-work-track className="flex h-full items-center gap-8 pl-10 will-change-transform">
+            <div className="grid gap-8 md:grid-cols-2">
               {projects.map((p) => (
-                <Link
-                  key={p.slug}
-                  to="/work/$slug"
-                  params={{ slug: p.slug }}
-                  className="group relative block h-[70vh] w-[60vw] shrink-0 overflow-hidden rounded-3xl border border-border bg-card/30"
-                >
-                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="absolute inset-0 h-full w-full object-cover opacity-65 grayscale transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 group-hover:grayscale-0" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-                  <div className="relative flex h-full flex-col justify-end p-10">
+                <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} data-work-card className="group relative block overflow-hidden rounded-3xl border border-border bg-card/30">
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.05] group-hover:brightness-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                  </div>
+                  <div className="relative p-7 md:p-9">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-primary">{p.tags.join(" · ")}</p>
-                    <h3 className="mt-3 font-display text-4xl font-medium tracking-[-0.04em]">{p.title}</h3>
+                    <h3 className="mt-3 font-display text-2xl font-medium tracking-[-0.03em] md:text-3xl">{p.title}</h3>
                     <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">{p.copy}</p>
-                    <span className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                    <span className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                       View case <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                   </div>
                 </Link>
               ))}
-              <div className="w-[10vw] shrink-0" aria-hidden="true" />
             </div>
           </div>
         </section>
+
 
         {/* PROCESS */}
         <section id="process" className="section-rule px-5 py-24 md:px-10 md:py-36">
@@ -383,6 +439,7 @@ function Index() {
           </div>
         </section>
 
+
         {/* TECH STACK MARQUEE */}
         <section className="section-rule overflow-hidden py-20 md:py-28">
           <div data-reveal className="mx-auto mb-10 max-w-7xl px-5 md:px-10">
@@ -397,6 +454,7 @@ function Index() {
             </div>
           </div>
         </section>
+
 
         {/* FAQ */}
         <section id="faq" className="section-rule px-5 py-24 md:px-10 md:py-36">
@@ -421,6 +479,7 @@ function Index() {
           </div>
         </section>
 
+
         {/* CONTACT */}
         <section id="contact" className="section-rule px-5 py-24 md:px-10 md:py-36">
           <div data-reveal data-cta-section className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -443,6 +502,7 @@ function Index() {
           </footer>
         </section>
       </main>
+
 
       <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
         <DialogContent className="glass-panel max-w-lg rounded-3xl border-border p-7 md:p-10">

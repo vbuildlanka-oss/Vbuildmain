@@ -29,14 +29,36 @@ function WorkDetail() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
-      // Page entrance: title area slides up first
+      if (reduceMotion) return;
+      // Page entrance
       gsap.from("[data-page-hero]", {
-        opacity: 0, y: reduceMotion ? 0 : 30, duration: 1, ease: "power3.out", delay: 0.1,
+        opacity: 0, y: 50, duration: 1.2, ease: "expo.out", delay: 0.15,
       });
-      // Remaining sections reveal on scroll
+      // Hero image scale
+      const heroImg = rootRef.current?.querySelector("section img");
+      if (heroImg) {
+        gsap.from(heroImg, { scale: 1.12, duration: 1.4, ease: "power2.out",
+          scrollTrigger: { trigger: heroImg, start: "top 90%", once: true } });
+      }
+      // Headings clip reveal
+      gsap.utils.toArray<HTMLElement>("h1, h2, h3").forEach((el) => {
+        gsap.fromTo(el,
+          { clipPath: "inset(0 0 100% 0)" },
+          { clipPath: "inset(0 0 0% 0)", duration: 1, ease: "power3.inOut",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true } }
+        );
+      });
+      // Scroll reveals
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 20, duration: 0.85, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+        gsap.from(el, { opacity: 0, y: 30, duration: 0.9, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+      });
+      // Stack tags cascade
+      gsap.utils.toArray<HTMLElement>(".flex-wrap > span").forEach((el, i) => {
+        gsap.from(el, { opacity: 0, scale: 0.8, duration: 0.4, delay: i * 0.04, ease: "back.out(2)",
+          scrollTrigger: { trigger: el.parentElement!, start: "top 88%", once: true } });
       });
     }, rootRef);
     return () => ctx.revert();
