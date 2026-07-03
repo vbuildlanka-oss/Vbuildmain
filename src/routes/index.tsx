@@ -191,26 +191,8 @@ function Index() {
       });
 
       // === HORIZONTAL PINNED SCROLL — desktop only ===
-      const mm = gsap.matchMedia();
-      mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
-        const track = document.querySelector<HTMLElement>("[data-work-track]");
-        const wrap = document.querySelector<HTMLElement>("[data-work-wrap]");
-        if (!track || !wrap) return;
-        const distance = () => track.scrollWidth - window.innerWidth + 80;
-        gsap.to(track, {
-          x: () => -distance(),
-          ease: "none",
-          scrollTrigger: {
-            trigger: wrap,
-            start: "top top",
-            end: () => `+=${distance()}`,
-            scrub: 1,
-            pin: true,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-          },
-        });
-      });
+      // Removed: pin-based horizontal scroll causes black screen flicker
+      // with Lenis smooth scrolling. Using vertical layout with parallax instead.
 
       // === MARQUEE SPEED VARIATION — slow on scroll ===
       const marquee = document.querySelector<HTMLElement>(".vbuild-marquee");
@@ -363,47 +345,23 @@ function Index() {
             </div>
           </div>
 
-          {/* Mobile / tablet vertical stack */}
-          <div className="mx-auto mt-14 max-w-7xl space-y-12 px-5 pb-24 md:px-10 md:pb-36 lg:hidden">
-            {projects.map((p) => (
-              <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} className="group block">
-                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted">
-                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 active:scale-[1.02]" />
+          <div className="mx-auto mt-14 max-w-7xl space-y-20 px-5 pb-24 md:px-10 md:pb-36">
+            {projects.map((p, i) => (
+              <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} data-reveal className="group block lg:grid lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16" style={{ direction: i % 2 === 1 ? "rtl" : "ltr" }}>
+                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted lg:aspect-[4/3]" style={{ direction: "ltr" }}>
+                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 lg:opacity-80 lg:grayscale lg:group-hover:grayscale-0" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent lg:from-transparent" />
                 </div>
-                <div className="mt-5">
-                  <h3 className="font-display text-2xl font-medium tracking-[-0.03em]">{p.title}</h3>
-                  <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">{p.copy}</p>
-                  <p className="mt-4 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{p.tags.join(" · ")}</p>
+                <div className="mt-6 lg:mt-0" style={{ direction: "ltr" }}>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-primary">{p.tags.join(" · ")}</p>
+                  <h3 className="mt-3 font-display text-3xl font-medium tracking-[-0.03em] md:text-4xl">{p.title}</h3>
+                  <p className="mt-4 max-w-md text-base leading-7 text-muted-foreground">{p.copy}</p>
+                  <span className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                    View case <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
                 </div>
               </Link>
             ))}
-          </div>
-
-          {/* Desktop horizontal pinned scroll */}
-          <div data-work-wrap className="relative mt-16 hidden h-screen lg:block bg-background">
-            <div data-work-track className="flex h-full items-center gap-8 pl-10 will-change-transform">
-              {projects.map((p) => (
-                <Link
-                  key={p.slug}
-                  to="/work/$slug"
-                  params={{ slug: p.slug }}
-                  data-work-card
-                  className="group relative block h-[70vh] w-[60vw] shrink-0 overflow-hidden rounded-3xl border border-border bg-card/30"
-                >
-                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="absolute inset-0 h-full w-full object-cover opacity-65 grayscale transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 group-hover:grayscale-0" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-                  <div className="relative flex h-full flex-col justify-end p-10">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-primary">{p.tags.join(" · ")}</p>
-                    <h3 className="mt-3 font-display text-4xl font-medium tracking-[-0.04em]">{p.title}</h3>
-                    <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">{p.copy}</p>
-                    <span className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                      View case <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </Link>
-              ))}
-              <div className="w-[10vw] shrink-0" aria-hidden="true" />
-            </div>
           </div>
         </section>
 
