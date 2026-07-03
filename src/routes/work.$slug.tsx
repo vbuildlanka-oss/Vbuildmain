@@ -14,15 +14,6 @@ export const Route = createFileRoute("/work/$slug")({
     if (!project) throw notFound();
     return { project };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.project.title} — VBUILD` },
-      { name: "description", content: loaderData?.project.copy ?? "" },
-      { property: "og:title", content: `${loaderData?.project.title} — VBUILD` },
-      { property: "og:description", content: loaderData?.project.copy ?? "" },
-      { property: "og:image", content: loaderData?.project.image ?? "" },
-    ],
-  }),
   component: WorkDetail,
   notFoundComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background text-foreground">

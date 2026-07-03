@@ -14,14 +14,6 @@ export const Route = createFileRoute("/services/$slug")({
     if (!service) throw notFound();
     return { service };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.service.title} — VBUILD` },
-      { name: "description", content: loaderData?.service.copy ?? "" },
-      { property: "og:title", content: `${loaderData?.service.title} — VBUILD` },
-      { property: "og:description", content: loaderData?.service.copy ?? "" },
-    ],
-  }),
   component: ServiceDetail,
   notFoundComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background text-foreground">

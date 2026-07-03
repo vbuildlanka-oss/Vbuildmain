@@ -14,14 +14,6 @@ import logoImage from "@/assets/vbuild-mark.jpeg";
 import { services, projects, techStack, faqs } from "@/data/site";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "VBUILD — Websites, AI Agents & Software" },
-      { name: "description", content: "VBUILD creates premium websites, AI agents, integrations, and custom software engineered to scale." },
-      { property: "og:title", content: "VBUILD — Websites, AI Agents & Software" },
-      { property: "og:description", content: "Intelligent digital systems, designed beautifully and engineered to scale." },
-    ],
-  }),
   component: Index,
 });
 
