@@ -27,17 +27,21 @@ const process = [
 const SPLINE_URL = "https://my.spline.design/aibrain-VnvsW1OxElArh6zfIspyafuH/";
 
 /**
- * Deferred Spline embed — avoids blocking initial paint.
- * 1. Waits for idle time (requestIdleCallback) before inserting the iframe.
+ * Deferred Spline embed — optimized for scroll performance.
+ * 1. Waits for idle time before inserting the iframe.
  * 2. Shows an animated gradient placeholder while loading.
- * 3. Fades the iframe in once it fires its load event.
+ * 3. Fades the iframe in once loaded.
+ * 4. Disables pointer-events so iframe never captures scroll.
+ * 5. Hides iframe (display:none) once user scrolls past the hero
+ *    to free GPU/CPU resources for the rest of the page.
  */
 function SplineEmbed() {
   const [shouldLoad, setShouldLoad] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Defer the iframe insertion until the browser is idle
     const schedule = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
     const id = schedule(() => setShouldLoad(true), { timeout: 1500 });
     return () => {
@@ -45,10 +49,27 @@ function SplineEmbed() {
     };
   }, []);
 
+  // Hide the iframe once user scrolls past the hero to reclaim GPU resources
+  useEffect(() => {
+    if (!loaded) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { rootMargin: "200px" },
+    );
+    const hero = document.querySelector("[data-hero]");
+    if (hero) observer.observe(hero);
+    return () => observer.disconnect();
+  }, [loaded]);
+
   const onIframeLoad = useCallback(() => setLoaded(true), []);
 
   return (
-    <div data-spline className="absolute inset-0 will-change-transform">
+    <div
+      ref={containerRef}
+      data-spline
+      className="pointer-events-none absolute inset-0 will-change-transform"
+      style={{ containIntrinsicSize: "100vw 100vh", contentVisibility: "auto" }}
+    >
       {/* Animated placeholder shown while iframe loads */}
       <div
         aria-hidden="true"
@@ -57,7 +78,7 @@ function SplineEmbed() {
         <div className="h-full w-full animate-pulse bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
       </div>
 
-      {/* Iframe — deferred and faded in */}
+      {/* Iframe — deferred, pointer-events disabled, hidden when off-screen */}
       {shouldLoad && (
         <iframe
           title="Interactive AI brain"
@@ -67,7 +88,8 @@ function SplineEmbed() {
           height="100%"
           loading="eager"
           onLoad={onIframeLoad}
-          className={`h-[calc(100%+5rem)] w-full border-0 transition-opacity duration-1000 ${loaded ? "opacity-75" : "opacity-0"}`}
+          style={{ display: visible ? "block" : "none" }}
+          className={`pointer-events-none h-[calc(100%+5rem)] w-full border-0 transition-opacity duration-1000 ${loaded ? "opacity-75" : "opacity-0"}`}
         />
       )}
 
@@ -96,7 +118,6 @@ function Index() {
       // Hero (untouched visuals; intro entrance only)
       gsap.from("[data-hero-item]", { opacity: 0, y: 24, duration: 1.1, stagger: 0.12, ease: "power2.out", delay: 0.2 });
       if (!reduceMotion) {
-        gsap.to("[data-spline]", { yPercent: 7, ease: "none", scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1.2 } });
         gsap.to("[data-hero-copy]", { yPercent: -8, opacity: 0.25, ease: "none", scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1 } });
       }
 
