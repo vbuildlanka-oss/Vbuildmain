@@ -147,7 +147,7 @@ function Index() {
       </header>
 
       <main>
-        {/* HERO — UNCHANGED */}
+        {/* HERO */}
         <section id="top" data-hero className="relative flex min-h-screen items-center overflow-hidden px-5 pt-24 md:px-10">
           <div data-spline className="absolute inset-0 will-change-transform">
             <iframe title="Interactive AI brain" src="https://my.spline.design/aibrain-VnvsW1OxElArh6zfIspyafuH/" frameBorder="0" width="100%" height="100%" loading="lazy" className="h-[calc(100%+5rem)] w-full border-0 opacity-75" />
@@ -186,7 +186,7 @@ function Index() {
           </div>
         </section>
 
-        {/* SERVICES — clickable 2x2 grid */}
+        {/* SERVICES */}
         <section id="services" className="section-rule px-5 py-24 md:px-10 md:py-36">
           <div className="mx-auto max-w-7xl">
             <div data-reveal className="mb-14 grid gap-8 lg:grid-cols-[1fr_.55fr] lg:items-end">
@@ -215,7 +215,7 @@ function Index() {
           </div>
         </section>
 
-        {/* SELECTED WORK — pinned horizontal on desktop, vertical stack on mobile */}
+        {/* SELECTED WORK */}
         <section id="work" className="section-rule">
           <div className="px-5 pt-24 md:px-10 md:pt-36">
             <div data-reveal className="mx-auto max-w-7xl">
@@ -337,8 +337,8 @@ function Index() {
           </div>
 
           <footer className="mx-auto mt-24 grid max-w-7xl gap-6 border-t border-border pt-7 text-xs text-muted-foreground sm:grid-cols-3">
-            <p>© 2026 VBUILD. All rights reserved.</p>
-            <p className="sm:text-center">Toronto, Canada · Working globally</p>
+            <p>&copy; 2026 VBUILD. All rights reserved.</p>
+            <p className="sm:text-center">Toronto, Canada &middot; Working globally</p>
             <div className="flex items-center gap-5 sm:justify-end">
               <a aria-label="LinkedIn" href="https://linkedin.com" className="transition-colors hover:text-primary"><Linkedin className="h-4 w-4" /></a>
               <a aria-label="GitHub" href="https://github.com" className="transition-colors hover:text-primary"><Github className="h-4 w-4" /></a>
