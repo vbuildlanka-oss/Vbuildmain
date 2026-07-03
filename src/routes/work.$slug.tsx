@@ -29,36 +29,9 @@ function WorkDetail() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
-      if (reduceMotion) return;
-      // Page entrance
-      gsap.from("[data-page-hero]", {
-        opacity: 0, y: 50, duration: 1.2, ease: "expo.out", delay: 0.15,
-      });
-      // Hero image scale
-      const heroImg = rootRef.current?.querySelector("section img");
-      if (heroImg) {
-        gsap.from(heroImg, { scale: 1.12, duration: 1.4, ease: "power2.out",
-          scrollTrigger: { trigger: heroImg, start: "top 90%", once: true } });
-      }
-      // Headings clip reveal
-      gsap.utils.toArray<HTMLElement>("h1, h2, h3").forEach((el) => {
-        gsap.fromTo(el,
-          { clipPath: "inset(0 0 100% 0)" },
-          { clipPath: "inset(0 0 0% 0)", duration: 1, ease: "power3.inOut",
-            scrollTrigger: { trigger: el, start: "top 88%", once: true } }
-        );
-      });
-      // Scroll reveals
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: 30, duration: 0.9, ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 88%", once: true } });
-      });
-      // Stack tags cascade
-      gsap.utils.toArray<HTMLElement>(".flex-wrap > span").forEach((el, i) => {
-        gsap.from(el, { opacity: 0, scale: 0.8, duration: 0.4, delay: i * 0.04, ease: "back.out(2)",
-          scrollTrigger: { trigger: el.parentElement!, start: "top 88%", once: true } });
+        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 24, duration: 0.8, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } });
       });
     }, rootRef);
     return () => ctx.revert();
@@ -78,7 +51,7 @@ function WorkDetail() {
       </header>
 
       <main className="mx-auto max-w-7xl px-5 py-20 md:px-10 md:py-32">
-        <section data-page-hero className="max-w-4xl">
+        <section data-reveal className="max-w-4xl">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Selected work</p>
           <h1 className="mt-6 font-display text-5xl font-medium leading-[1.02] tracking-[-0.05em] md:text-8xl">{project.title}</h1>
           <p className="mt-8 max-w-2xl text-lg leading-8 text-muted-foreground">{project.copy}</p>

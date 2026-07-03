@@ -29,30 +29,9 @@ function ServiceDetail() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
-      if (reduceMotion) return;
-      // Page entrance
-      gsap.from("[data-page-hero]", {
-        opacity: 0, y: 50, duration: 1.2, ease: "expo.out", delay: 0.15,
-      });
-      // Headings clip reveal
-      gsap.utils.toArray<HTMLElement>("h1, h2").forEach((el) => {
-        gsap.fromTo(el,
-          { clipPath: "inset(0 0 100% 0)" },
-          { clipPath: "inset(0 0 0% 0)", duration: 1, ease: "power3.inOut",
-            scrollTrigger: { trigger: el, start: "top 88%", once: true } }
-        );
-      });
-      // Scroll reveals
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: 30, duration: 0.9, ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 88%", once: true } });
-      });
-      // List items cascade
-      gsap.utils.toArray<HTMLElement>("ul li, ol li").forEach((el, i) => {
-        gsap.from(el, { opacity: 0, x: -20, duration: 0.6, delay: i * 0.04, ease: "power2.out",
-          scrollTrigger: { trigger: el.parentElement!, start: "top 88%", once: true } });
+        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 24, duration: 0.8, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } });
       });
     }, rootRef);
     return () => ctx.revert();
@@ -72,7 +51,7 @@ function ServiceDetail() {
       </header>
 
       <main className="mx-auto max-w-7xl px-5 py-20 md:px-10 md:py-32">
-        <section data-page-hero className="max-w-4xl">
+        <section data-reveal className="max-w-4xl">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Service</p>
           <h1 className="mt-6 font-display text-5xl font-medium leading-[1.02] tracking-[-0.05em] md:text-8xl">{service.title}</h1>
           <p className="mt-8 max-w-2xl text-lg leading-8 text-muted-foreground">{service.long}</p>
