@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -23,6 +23,58 @@ const process = [
   { step: "Build", detail: "Production engineering with weekly demos." },
   { step: "Ship", detail: "Launch, measure, refine — together." },
 ];
+
+const SPLINE_URL = "https://my.spline.design/aibrain-VnvsW1OxElArh6zfIspyafuH/";
+
+/**
+ * Deferred Spline embed — avoids blocking initial paint.
+ * 1. Waits for idle time (requestIdleCallback) before inserting the iframe.
+ * 2. Shows an animated gradient placeholder while loading.
+ * 3. Fades the iframe in once it fires its load event.
+ */
+function SplineEmbed() {
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    // Defer the iframe insertion until the browser is idle
+    const schedule = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
+    const id = schedule(() => setShouldLoad(true), { timeout: 1500 });
+    return () => {
+      if (window.cancelIdleCallback) window.cancelIdleCallback(id as number);
+    };
+  }, []);
+
+  const onIframeLoad = useCallback(() => setLoaded(true), []);
+
+  return (
+    <div data-spline className="absolute inset-0 will-change-transform">
+      {/* Animated placeholder shown while iframe loads */}
+      <div
+        aria-hidden="true"
+        className={`absolute inset-0 transition-opacity duration-700 ${loaded ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+      >
+        <div className="h-full w-full animate-pulse bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
+      </div>
+
+      {/* Iframe — deferred and faded in */}
+      {shouldLoad && (
+        <iframe
+          title="Interactive AI brain"
+          src={SPLINE_URL}
+          frameBorder="0"
+          width="100%"
+          height="100%"
+          loading="eager"
+          onLoad={onIframeLoad}
+          className={`h-[calc(100%+5rem)] w-full border-0 transition-opacity duration-1000 ${loaded ? "opacity-75" : "opacity-0"}`}
+        />
+      )}
+
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent via-background/80 to-background" />
+    </div>
+  );
+}
 
 function Index() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -141,10 +193,7 @@ function Index() {
       <main>
         {/* HERO */}
         <section id="top" data-hero className="relative flex min-h-screen items-center overflow-hidden px-5 pt-24 md:px-10">
-          <div data-spline className="absolute inset-0 will-change-transform">
-            <iframe title="Interactive AI brain" src="https://my.spline.design/aibrain-VnvsW1OxElArh6zfIspyafuH/" frameBorder="0" width="100%" height="100%" loading="lazy" className="h-[calc(100%+5rem)] w-full border-0 opacity-75" />
-            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent via-background/80 to-background" />
-          </div>
+          <SplineEmbed />
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--background)_3%,color-mix(in_oklab,var(--background)_88%,transparent)_34%,color-mix(in_oklab,var(--background)_25%,transparent)_70%),linear-gradient(0deg,var(--background)_0%,transparent_40%)]" />
           <div data-hero-copy className="relative z-10 mx-auto w-full max-w-[1440px] will-change-transform">
             <div className="max-w-3xl">
