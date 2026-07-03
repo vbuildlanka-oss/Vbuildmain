@@ -100,6 +100,7 @@ function SplineEmbed() {
 
 function Index() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
@@ -108,28 +109,52 @@ function Index() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.registerPlugin(ScrollTrigger);
 
-    const lenis = new Lenis({ duration: 1.15, smoothWheel: !reduceMotion, smoothTouch: false } as any);
+    // Lenis: slightly longer duration for that premium weight
+    const lenis = new Lenis({ duration: 1.3, smoothWheel: !reduceMotion, smoothTouch: false } as any);
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.lagSmoothing(0);
 
     const context = gsap.context(() => {
-      // Hero (untouched visuals; intro entrance only)
-      gsap.from("[data-hero-item]", { opacity: 0, y: 24, duration: 1.1, stagger: 0.12, ease: "power2.out", delay: 0.2 });
+      // === HERO ENTRANCE — slower, more cinematic stagger ===
+      gsap.from("[data-hero-item]", {
+        opacity: 0, y: 32, duration: 1.3, stagger: 0.18, ease: "power3.out", delay: 0.3,
+      });
+
       if (!reduceMotion) {
-        gsap.to("[data-hero-copy]", { yPercent: -8, opacity: 0.25, ease: "none", scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1 } });
+        // Hero text drifts up + fades as user scrolls away
+        gsap.to("[data-hero-copy]", {
+          yPercent: -10, opacity: 0.15, ease: "none",
+          scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1 },
+        });
+
+        // === HEADER — subtle background reveal on scroll ===
+        ScrollTrigger.create({
+          trigger: "[data-hero]",
+          start: "60px top",
+          onEnter: () => headerRef.current?.classList.add("header-scrolled"),
+          onLeaveBack: () => headerRef.current?.classList.remove("header-scrolled"),
+        });
       }
 
+      // === SECTION REVEALS — elements already visible, slide up gently ===
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 24, duration: 0.85, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 85%", once: true } });
+        gsap.from(el, {
+          opacity: 0, y: reduceMotion ? 0 : 20, duration: 0.9, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%", once: true },
+        });
       });
 
+      // === STAGGER GROUPS — cards slide up with spring ===
       gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
-        gsap.from(group.children, { opacity: 0, y: reduceMotion ? 0 : 60, duration: 0.8, stagger: 0.08, ease: "power3.out", scrollTrigger: { trigger: group, start: "top 85%", once: true } });
+        gsap.from(group.children, {
+          opacity: 0, y: reduceMotion ? 0 : 40, duration: 0.75, stagger: 0.1, ease: "power3.out",
+          scrollTrigger: { trigger: group, start: "top 88%", once: true },
+        });
       });
 
-      // Horizontal pinned scroll (desktop only)
+      // === HORIZONTAL SCROLL (desktop) ===
       const mm = gsap.matchMedia();
       mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
         const track = document.querySelector<HTMLElement>("[data-work-track]");
@@ -149,6 +174,16 @@ function Index() {
           },
         });
       });
+
+      // === CONTACT CTA — slight scale on scroll into view ===
+      const cta = document.querySelector("[data-cta-section]");
+      if (cta && !reduceMotion) {
+        gsap.from(cta, {
+          scale: 0.97, duration: 0.8, ease: "power2.out",
+          scrollTrigger: { trigger: cta, start: "top 90%", once: true },
+        });
+      }
+
     }, rootRef);
 
     const refresh = () => ScrollTrigger.refresh();
@@ -175,7 +210,7 @@ function Index() {
 
   return (
     <div ref={rootRef} className="min-h-screen overflow-x-clip bg-background text-foreground selection:bg-primary/30">
-      <header className="fixed inset-x-0 top-0 z-50 mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 md:flex md:justify-between md:px-10 md:py-5">
+      <header ref={headerRef} className="fixed inset-x-0 top-0 z-50 mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 transition-[background,backdrop-filter] duration-500 md:flex md:justify-between md:px-10 md:py-5">
         <a href="#top" aria-label="VBUILD home" className="glass-panel flex h-12 items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4">
           <span className="flex h-9 w-11 items-center justify-center overflow-hidden rounded-full bg-background">
             <img src={logoImage} alt="" className="h-full w-full object-cover" />
@@ -388,7 +423,7 @@ function Index() {
 
         {/* CONTACT */}
         <section id="contact" className="section-rule px-5 py-24 md:px-10 md:py-36">
-          <div data-reveal className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div data-reveal data-cta-section className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Have a challenge in mind?</p>
               <h2 className="mt-7 max-w-4xl font-display text-5xl font-medium tracking-[-0.055em] md:text-8xl">Let's build what's next.</h2>

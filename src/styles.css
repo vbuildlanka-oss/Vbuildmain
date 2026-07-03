@@ -156,6 +156,13 @@
   html { scroll-behavior: auto; }
 }
 
+/* Header gains backdrop blur when scrolled past hero */
+.header-scrolled {
+  background: color-mix(in oklab, var(--background) 75%, transparent);
+  backdrop-filter: blur(20px) saturate(140%);
+  border-bottom: 1px solid var(--border);
+}
+
 @utility glass-panel {
   background: var(--card);
   border: 1px solid var(--border);
