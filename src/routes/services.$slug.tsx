@@ -40,7 +40,7 @@ function ServiceDetail() {
       // Scroll reveals
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
         gsap.from(el, {
-          opacity: 0, y: reduceMotion ? 0 : 30, rotateX: reduceMotion ? 0 : 3,
+          opacity: 0, y: reduceMotion ? 0 : 28,
           duration: 0.85, ease: "power2.out",
           scrollTrigger: { trigger: el, start: "top 88%", once: true },
         });

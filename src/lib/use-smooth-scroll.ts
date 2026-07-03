@@ -10,9 +10,8 @@ export function useSmoothScroll() {
     gsap.registerPlugin(ScrollTrigger);
 
     const lenis = new Lenis({
-      duration: 1.4,
+      duration: 1.2,
       smoothWheel: !reduceMotion,
-      lerp: 0.08,
     });
 
     const onTick = (time: number) => lenis.raf(time * 1000);

@@ -87,7 +87,7 @@ function Index() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.registerPlugin(ScrollTrigger);
 
-    const lenis = new Lenis({ duration: 1.4, smoothWheel: !reduceMotion, smoothTouch: false, lerp: 0.08 } as any);
+    const lenis = new Lenis({ duration: 1.2, smoothWheel: !reduceMotion, smoothTouch: false } as any);
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
     lenis.on("scroll", ScrollTrigger.update);
@@ -172,10 +172,10 @@ function Index() {
         });
       }
 
-      // === STANDARD REVEALS — improved with slight rotation ===
+      // === STANDARD REVEALS — smooth fade + slide ===
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
         gsap.from(el, {
-          opacity: 0, y: reduceMotion ? 0 : 32, rotateX: reduceMotion ? 0 : 4,
+          opacity: 0, y: reduceMotion ? 0 : 28,
           duration: 0.9, ease: "power2.out",
           scrollTrigger: { trigger: el, start: "top 85%", once: true },
         });
@@ -184,7 +184,7 @@ function Index() {
       // === STAGGER GROUPS — scale in with spring feel ===
       gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
         gsap.from(group.children, {
-          opacity: 0, y: reduceMotion ? 0 : 50, scale: reduceMotion ? 1 : 0.95,
+          opacity: 0, y: reduceMotion ? 0 : 40, scale: reduceMotion ? 1 : 0.97,
           duration: 0.7, stagger: 0.1, ease: "back.out(1.2)",
           scrollTrigger: { trigger: group, start: "top 85%", once: true },
         });
@@ -204,27 +204,11 @@ function Index() {
             trigger: wrap,
             start: "top top",
             end: () => `+=${distance()}`,
-            scrub: 1.5,
+            scrub: 1,
             pin: true,
+            anticipatePin: 1,
             invalidateOnRefresh: true,
           },
-        });
-
-        // Cards within track get a subtle rotation + parallax
-        gsap.utils.toArray<HTMLElement>("[data-work-card]").forEach((card, i) => {
-          gsap.from(card, {
-            rotateY: 4,
-            scale: 0.96,
-            opacity: 0.7,
-            duration: 1,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: wrap,
-              start: () => `top+=${i * 300} top`,
-              end: () => `top+=${i * 300 + 500} top`,
-              scrub: 1,
-            },
-          });
         });
       });
 
@@ -371,7 +355,7 @@ function Index() {
         </section>
 
         {/* SELECTED WORK */}
-        <section id="work" className="section-rule">
+        <section id="work" className="section-rule bg-background">
           <div className="px-5 pt-24 md:px-10 md:pt-36">
             <div data-reveal className="mx-auto max-w-7xl">
               <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Selected work</p>
@@ -396,7 +380,7 @@ function Index() {
           </div>
 
           {/* Desktop horizontal pinned scroll */}
-          <div data-work-wrap className="relative mt-16 hidden h-screen overflow-hidden lg:block">
+          <div data-work-wrap className="relative mt-16 hidden h-screen lg:block bg-background">
             <div data-work-track className="flex h-full items-center gap-8 pl-10 will-change-transform">
               {projects.map((p) => (
                 <Link

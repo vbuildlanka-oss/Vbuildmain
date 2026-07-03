@@ -154,11 +154,6 @@
 
   ::selection { background: color-mix(in oklab, var(--primary) 40%, transparent); }
   html { scroll-behavior: auto; }
-
-  /* Enable 3D perspective for scroll reveals with rotateX */
-  main, [data-reveal], [data-page-intro], [data-heading-reveal] {
-    perspective: 1200px;
-  }
 }
 
 @utility glass-panel {
