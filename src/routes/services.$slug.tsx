@@ -44,8 +44,7 @@ function ServiceDetail() {
             scrollTrigger: {
               trigger: el,
               start: "top 90%",
-              end: "top 20%",
-              toggleActions: "play reverse play reverse",
+              toggleActions: "play none none reverse",
             },
           }
         );

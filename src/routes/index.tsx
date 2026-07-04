@@ -131,8 +131,7 @@ function Index() {
             scrollTrigger: {
               trigger: el,
               start: "top 90%",
-              end: "top 20%",
-              toggleActions: "play reverse play reverse",
+              toggleActions: "play none none reverse",
             },
           }
         );
@@ -150,8 +149,7 @@ function Index() {
               scrollTrigger: {
                 trigger: child,
                 start: "top 92%",
-                end: "top 20%",
-                toggleActions: "play reverse play reverse",
+                toggleActions: "play none none reverse",
               },
             }
           );
@@ -167,8 +165,7 @@ function Index() {
             scrollTrigger: {
               trigger: card,
               start: "top 92%",
-              end: "top 15%",
-              toggleActions: "play reverse play reverse",
+              toggleActions: "play none none reverse",
             },
           }
         );
@@ -203,8 +200,7 @@ function Index() {
           scrollTrigger: {
             trigger: "footer",
             start: "top 95%",
-            end: "top 50%",
-            toggleActions: "play reverse play reverse",
+            toggleActions: "play none none reverse",
           },
         }
       );
