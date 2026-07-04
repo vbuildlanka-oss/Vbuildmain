@@ -35,12 +35,20 @@ function ServiceDetail() {
       gsap.from("[data-reveal]:first-of-type", {
         opacity: 0, y: reduceMotion ? 0 : 30, duration: 1, ease: "power3.out", delay: 0.1,
       });
-      // Scroll reveals
+      // Toggle reveals — play on scroll down, reverse on scroll up
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, {
-          opacity: 0, y: reduceMotion ? 0 : 25, duration: 0.85, ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 90%", once: true },
-        });
+        gsap.fromTo(el,
+          { opacity: 0, y: reduceMotion ? 0 : 25 },
+          {
+            opacity: 1, y: 0, duration: 0.8, ease: "power2.out",
+            scrollTrigger: {
+              trigger: el,
+              start: "top 90%",
+              end: "top 20%",
+              toggleActions: "play reverse play reverse",
+            },
+          }
+        );
       });
     }, rootRef);
     return () => ctx.revert();

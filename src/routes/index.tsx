@@ -98,7 +98,7 @@ function Index() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.registerPlugin(ScrollTrigger);
 
-    // Lenis — luxurious weighted scroll
+    // Lenis — smooth, weighted scroll
     const lenis = new Lenis({ duration: 1.4, smoothWheel: !reduceMotion, smoothTouch: false } as any);
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
@@ -106,102 +106,108 @@ function Index() {
     gsap.ticker.lagSmoothing(0);
 
     const context = gsap.context(() => {
-      // === HERO — cinematic entrance ===
+      // === HERO — cinematic entrance timeline ===
       gsap.from("[data-hero-item]", {
         opacity: 0, y: reduceMotion ? 0 : 40, duration: 1.4,
         stagger: 0.18, ease: "expo.out", delay: 0.3,
       });
 
       if (!reduceMotion) {
-        // Hero text parallax on scroll
+        // Hero copy drifts up and fades on scroll
         gsap.to("[data-hero-copy]", {
           yPercent: -12, opacity: 0, ease: "none",
           scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: true },
         });
       }
 
-      // === RESPONSIVE ANIMATIONS via matchMedia ===
-      const mm = gsap.matchMedia();
-
-      // --- DESKTOP (1024px+) ---
-      mm.add("(min-width: 1024px)", () => {
-        // Section text reveals — generous travel
-        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-          gsap.from(el, {
-            opacity: 0, y: reduceMotion ? 0 : 35, duration: 1,
-            ease: "power3.out",
-            scrollTrigger: { trigger: el, start: "top 88%", once: true },
-          });
-        });
-
-        // Card staggers — spring bounce
-        gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
-          gsap.from(group.children, {
-            opacity: 0, y: reduceMotion ? 0 : 50, scale: reduceMotion ? 1 : 0.96,
-            duration: 0.85, stagger: 0.12, ease: "back.out(1.4)",
-            scrollTrigger: { trigger: group, start: "top 88%", once: true },
-          });
-        });
-
-        // Horizontal pinned scroll
-        if (!reduceMotion) {
-          const track = document.querySelector<HTMLElement>("[data-work-track]");
-          const wrap = document.querySelector<HTMLElement>("[data-work-wrap]");
-          if (track && wrap) {
-            const distance = () => track.scrollWidth - window.innerWidth + 80;
-            gsap.to(track, {
-              x: () => -distance(),
-              ease: "none",
-              scrollTrigger: {
-                trigger: wrap,
-                start: "top top",
-                end: () => `+=${distance()}`,
-                scrub: 1,
-                pin: true,
-                invalidateOnRefresh: true,
-              },
-            });
+      // === SCROLL-TRIGGERED REVEALS — toggles on scroll up/down ===
+      // Every [data-reveal] element fades/slides in when entering viewport
+      // and reverses when leaving (scrolling back up)
+      gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
+        gsap.fromTo(el,
+          { opacity: 0, y: reduceMotion ? 0 : 30 },
+          {
+            opacity: 1, y: 0, duration: 0.9, ease: "power2.out",
+            scrollTrigger: {
+              trigger: el,
+              start: "top 90%",
+              end: "top 20%",
+              toggleActions: "play reverse play reverse",
+            },
           }
+        );
+      });
+
+      // === STAGGER GROUPS — cards reveal with stagger, reverse on scroll up ===
+      gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
+        const children = gsap.utils.toArray<HTMLElement>(group.children);
+        children.forEach((child, i) => {
+          gsap.fromTo(child,
+            { opacity: 0, y: reduceMotion ? 0 : 40 },
+            {
+              opacity: 1, y: 0, duration: 0.7, ease: "power3.out",
+              delay: i * 0.08,
+              scrollTrigger: {
+                trigger: child,
+                start: "top 92%",
+                end: "top 20%",
+                toggleActions: "play reverse play reverse",
+              },
+            }
+          );
+        });
+      });
+
+      // === MOBILE WORK CARDS — reveal on scroll ===
+      gsap.utils.toArray<HTMLElement>("[data-mobile-work] > a").forEach((card) => {
+        gsap.fromTo(card,
+          { opacity: 0, y: reduceMotion ? 0 : 30 },
+          {
+            opacity: 1, y: 0, duration: 0.8, ease: "power2.out",
+            scrollTrigger: {
+              trigger: card,
+              start: "top 92%",
+              end: "top 15%",
+              toggleActions: "play reverse play reverse",
+            },
+          }
+        );
+      });
+
+      // === HORIZONTAL SCROLL (desktop only) ===
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
+        const track = document.querySelector<HTMLElement>("[data-work-track]");
+        const wrap = document.querySelector<HTMLElement>("[data-work-wrap]");
+        if (!track || !wrap) return;
+        const distance = () => track.scrollWidth - window.innerWidth + 80;
+        gsap.to(track, {
+          x: () => -distance(),
+          ease: "none",
+          scrollTrigger: {
+            trigger: wrap,
+            start: "top top",
+            end: () => `+=${distance()}`,
+            scrub: 1,
+            pin: true,
+            invalidateOnRefresh: true,
+          },
+        });
+      });
+
+      // === FOOTER — slides up ===
+      gsap.fromTo("footer",
+        { opacity: 0, y: reduceMotion ? 0 : 20 },
+        {
+          opacity: 1, y: 0, duration: 0.7, ease: "power2.out",
+          scrollTrigger: {
+            trigger: "footer",
+            start: "top 95%",
+            end: "top 50%",
+            toggleActions: "play reverse play reverse",
+          },
         }
-      });
-
-      // --- TABLET (768px - 1023px) ---
-      mm.add("(min-width: 768px) and (max-width: 1023px)", () => {
-        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-          gsap.from(el, {
-            opacity: 0, y: reduceMotion ? 0 : 28, duration: 0.9,
-            ease: "power2.out",
-            scrollTrigger: { trigger: el, start: "top 90%", once: true },
-          });
-        });
-
-        gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
-          gsap.from(group.children, {
-            opacity: 0, y: reduceMotion ? 0 : 35, duration: 0.75,
-            stagger: 0.1, ease: "power3.out",
-            scrollTrigger: { trigger: group, start: "top 90%", once: true },
-          });
-        });
-      });
-
-      // --- MOBILE (< 768px) ---
-      mm.add("(max-width: 767px)", () => {
-        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-          gsap.from(el, {
-            opacity: 0, y: reduceMotion ? 0 : 20, duration: 0.7,
-            ease: "power2.out",
-            scrollTrigger: { trigger: el, start: "top 92%", once: true },
-          });
-        });
-
-        gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
-          gsap.from(group.children, {
-            opacity: 0, y: reduceMotion ? 0 : 25, duration: 0.6,
-            stagger: 0.08, ease: "power2.out",
-            scrollTrigger: { trigger: group, start: "top 92%", once: true },
-          });
-        });
-      });
+      );
 
     }, rootRef);
 
@@ -341,7 +347,7 @@ function Index() {
           </div>
 
           {/* Mobile / tablet vertical stack */}
-          <div className="mx-auto mt-14 max-w-7xl space-y-12 px-5 pb-24 md:px-10 md:pb-36 lg:hidden">
+          <div data-mobile-work className="mx-auto mt-14 max-w-7xl space-y-12 px-5 pb-24 md:px-10 md:pb-36 lg:hidden">
             {projects.map((p) => (
               <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} className="group block">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted">
