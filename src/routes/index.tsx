@@ -98,47 +98,111 @@ function Index() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.registerPlugin(ScrollTrigger);
 
-    const lenis = new Lenis({ duration: 1.15, smoothWheel: !reduceMotion, smoothTouch: false } as any);
+    // Lenis — luxurious weighted scroll
+    const lenis = new Lenis({ duration: 1.4, smoothWheel: !reduceMotion, smoothTouch: false } as any);
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.lagSmoothing(0);
 
     const context = gsap.context(() => {
-      // Hero (untouched visuals; intro entrance only)
-      gsap.from("[data-hero-item]", { opacity: 0, y: 24, duration: 1.1, stagger: 0.12, ease: "power2.out", delay: 0.2 });
+      // === HERO — cinematic entrance ===
+      gsap.from("[data-hero-item]", {
+        opacity: 0, y: reduceMotion ? 0 : 40, duration: 1.4,
+        stagger: 0.18, ease: "expo.out", delay: 0.3,
+      });
+
       if (!reduceMotion) {
-        gsap.to("[data-hero-copy]", { yPercent: -8, opacity: 0.25, ease: "none", scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: 1 } });
+        // Hero text parallax on scroll
+        gsap.to("[data-hero-copy]", {
+          yPercent: -12, opacity: 0, ease: "none",
+          scrollTrigger: { trigger: "[data-hero]", start: "top top", end: "bottom top", scrub: true },
+        });
       }
 
-      gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 24, duration: 0.85, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 85%", once: true } });
-      });
-
-      gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
-        gsap.from(group.children, { opacity: 0, y: reduceMotion ? 0 : 60, duration: 0.8, stagger: 0.08, ease: "power3.out", scrollTrigger: { trigger: group, start: "top 85%", once: true } });
-      });
-
-      // Horizontal pinned scroll (desktop only)
+      // === RESPONSIVE ANIMATIONS via matchMedia ===
       const mm = gsap.matchMedia();
-      mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
-        const track = document.querySelector<HTMLElement>("[data-work-track]");
-        const wrap = document.querySelector<HTMLElement>("[data-work-wrap]");
-        if (!track || !wrap) return;
-        const distance = () => track.scrollWidth - window.innerWidth + 80;
-        gsap.to(track, {
-          x: () => -distance(),
-          ease: "none",
-          scrollTrigger: {
-            trigger: wrap,
-            start: "top top",
-            end: () => `+=${distance()}`,
-            scrub: 1,
-            pin: true,
-            invalidateOnRefresh: true,
-          },
+
+      // --- DESKTOP (1024px+) ---
+      mm.add("(min-width: 1024px)", () => {
+        // Section text reveals — generous travel
+        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
+          gsap.from(el, {
+            opacity: 0, y: reduceMotion ? 0 : 35, duration: 1,
+            ease: "power3.out",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          });
+        });
+
+        // Card staggers — spring bounce
+        gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
+          gsap.from(group.children, {
+            opacity: 0, y: reduceMotion ? 0 : 50, scale: reduceMotion ? 1 : 0.96,
+            duration: 0.85, stagger: 0.12, ease: "back.out(1.4)",
+            scrollTrigger: { trigger: group, start: "top 88%", once: true },
+          });
+        });
+
+        // Horizontal pinned scroll
+        if (!reduceMotion) {
+          const track = document.querySelector<HTMLElement>("[data-work-track]");
+          const wrap = document.querySelector<HTMLElement>("[data-work-wrap]");
+          if (track && wrap) {
+            const distance = () => track.scrollWidth - window.innerWidth + 80;
+            gsap.to(track, {
+              x: () => -distance(),
+              ease: "none",
+              scrollTrigger: {
+                trigger: wrap,
+                start: "top top",
+                end: () => `+=${distance()}`,
+                scrub: 1,
+                pin: true,
+                invalidateOnRefresh: true,
+              },
+            });
+          }
+        }
+      });
+
+      // --- TABLET (768px - 1023px) ---
+      mm.add("(min-width: 768px) and (max-width: 1023px)", () => {
+        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
+          gsap.from(el, {
+            opacity: 0, y: reduceMotion ? 0 : 28, duration: 0.9,
+            ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 90%", once: true },
+          });
+        });
+
+        gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
+          gsap.from(group.children, {
+            opacity: 0, y: reduceMotion ? 0 : 35, duration: 0.75,
+            stagger: 0.1, ease: "power3.out",
+            scrollTrigger: { trigger: group, start: "top 90%", once: true },
+          });
         });
       });
+
+      // --- MOBILE (< 768px) ---
+      mm.add("(max-width: 767px)", () => {
+        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
+          gsap.from(el, {
+            opacity: 0, y: reduceMotion ? 0 : 20, duration: 0.7,
+            ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 92%", once: true },
+          });
+        });
+
+        gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((group) => {
+          gsap.from(group.children, {
+            opacity: 0, y: reduceMotion ? 0 : 25, duration: 0.6,
+            stagger: 0.08, ease: "power2.out",
+            scrollTrigger: { trigger: group, start: "top 92%", once: true },
+          });
+        });
+      });
+
     }, rootRef);
 
     const refresh = () => ScrollTrigger.refresh();

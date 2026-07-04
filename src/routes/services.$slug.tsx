@@ -29,9 +29,18 @@ function ServiceDetail() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
+      // Page entrance
+      gsap.from("[data-reveal]:first-of-type", {
+        opacity: 0, y: reduceMotion ? 0 : 30, duration: 1, ease: "power3.out", delay: 0.1,
+      });
+      // Scroll reveals
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-        gsap.from(el, { opacity: 0, y: reduceMotion ? 0 : 24, duration: 0.8, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+        gsap.from(el, {
+          opacity: 0, y: reduceMotion ? 0 : 25, duration: 0.85, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 90%", once: true },
+        });
       });
     }, rootRef);
     return () => ctx.revert();
