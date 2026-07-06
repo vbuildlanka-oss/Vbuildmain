@@ -1,6 +1,7 @@
 import atlasImage from "@/assets/project-atlas.jpg";
 import northstarImage from "@/assets/project-northstar.jpg";
 import apertureImage from "@/assets/project-aperture.jpg";
+import churnImage from "@/assets/churn.png";
 
 export type Service = {
   slug: string;
@@ -126,15 +127,15 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    slug: "atlas",
-    title: "Atlas Intelligence",
-    copy: "An AI research workspace that turns scattered market signals into precise, cited insight.",
-    tags: ["AI Agents", "RAG", "React"],
-    image: atlasImage,
-    problem: "Analysts spent hours stitching together fragmented research from dozens of sources.",
-    solution: "A multi-agent research workspace with citation-grounded answers and a flexible canvas.",
-    outcome: "Research cycles compressed from days to minutes with traceable provenance.",
-    stack: ["React", "TypeScript", "OpenAI", "pgvector", "Postgres"],
+    slug: "churn-radar",
+    title: "Churn Radar",
+    copy: "An end-to-end machine-learning app that predicts which telecom customers are about to cancel — so teams can act before they leave.",
+    tags: ["Machine Learning", "Python", "Streamlit"],
+    image: churnImage,
+    problem: "Telecom teams only discovered a customer had churned after they were already gone — with no window to intervene.",
+    solution: "A scikit-learn pipeline cleans real customer data, compares several models by cross-validated ROC-AUC, explains what drives churn, and scores any customer in real time. Fully self-contained, with no API keys or database.",
+    outcome: "At-risk customers are surfaced before they cancel, turning churn from a post-mortem into a prevention workflow.",
+    stack: ["Python", "scikit-learn", "Streamlit", "pandas"],
   },
   {
     slug: "northstar",
