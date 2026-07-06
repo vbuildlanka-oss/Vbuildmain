@@ -1,7 +1,7 @@
-import atlasImage from "@/assets/project-atlas.jpg";
-import northstarImage from "@/assets/project-northstar.jpg";
-import apertureImage from "@/assets/project-aperture.jpg";
-import churnImage from "@/assets/churn2.jpeg";
+import atlasImage from "@/assets/project-atlas.webp";
+import northstarImage from "@/assets/project-northstar.webp";
+import apertureImage from "@/assets/project-aperture.webp";
+import churnImage from "@/assets/churn2.webp";
 
 export type Service = {
   slug: string;

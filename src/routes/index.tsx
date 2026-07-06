@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import founderImage from "@/assets/founder-lathurshan.png";
-import logoImage from "@/assets/vbuild-mark.jpeg";
+import founderImage from "@/assets/founder-lathurshan.webp";
+import logoImage from "@/assets/vbuild-mark.webp";
 import { services, projects, techStack, faqs } from "@/data/site";
 
 export const Route = createFileRoute("/")({
