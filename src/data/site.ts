@@ -1,7 +1,7 @@
 import atlasImage from "@/assets/project-atlas.webp";
 import northstarImage from "@/assets/project-northstar.webp";
 import apertureImage from "@/assets/project-aperture.webp";
-import churnImage from "@/assets/churn2.webp";
+import irisImage from "@/assets/iris.webp";
 
 export type Service = {
   slug: string;
@@ -127,15 +127,15 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    slug: "churn-radar",
-    title: "Churn Radar",
-    copy: "An end-to-end machine-learning app that predicts which telecom customers are about to cancel — so teams can act before they leave.",
-    tags: ["Machine Learning", "Python", "Streamlit"],
-    image: churnImage,
-    problem: "Telecom teams only discovered a customer had churned after they were already gone — with no window to intervene.",
-    solution: "A scikit-learn pipeline cleans real customer data, compares several models by cross-validated ROC-AUC, explains what drives churn, and scores any customer in real time. Fully self-contained, with no API keys or database.",
-    outcome: "At-risk customers are surfaced before they cancel, turning churn from a post-mortem into a prevention workflow.",
-    stack: ["Python", "scikit-learn", "Streamlit", "pandas"],
+    slug: "iris",
+    title: "Iris — Neural Photo Search",
+    copy: "A semantic image search engine that finds photos from a plain-language description.",
+    tags: ["CLIP", "Transformers.js", "React"],
+    image: irisImage,
+    problem: "Finding the right photo in a large library meant endless scrolling or relying on manual tags that rarely existed.",
+    solution: "OpenAI's CLIP model runs directly in the browser via Transformers.js and ONNX Runtime Web, embedding images and text into a shared 512-dimension vector space and ranking results by cosine similarity. Includes reverse image search, zero-shot tagging, and a live PCA visualization of the embedding space.",
+    outcome: "Natural-language photo retrieval that runs entirely client-side, evaluated offline at mAP 0.98.",
+    stack: ["CLIP ViT-B/32", "Transformers.js", "ONNX Runtime", "React", "TypeScript", "Vite"],
   },
   {
     slug: "northstar",
