@@ -135,6 +135,7 @@ export const projects: Project[] = [
     solution: "OpenAI's CLIP model runs directly in the browser via Transformers.js and ONNX Runtime Web, embedding images and text into a shared 512-dimension vector space and ranking results by cosine similarity. Includes reverse image search, zero-shot tagging, and a live PCA visualization of the embedding space.",
     outcome: "Natural-language photo retrieval that runs entirely client-side, evaluated offline at mAP 0.98.",
     stack: ["CLIP ViT-B/32", "Transformers.js", "ONNX Runtime", "React", "TypeScript", "Vite"],
+    liveUrl: "https://vbuild-iris.vercel.app/",
   },
   {
     slug: "beacon",
@@ -146,6 +147,7 @@ export const projects: Project[] = [
     solution: "Paste any URL and instantly get a scored A–F report. Built with Node.js, Beacon fetches the live page, parses its HTML, and runs it through a comprehensive checklist — all stateless, with no signups or configuration required.",
     outcome: "Instant visibility into page quality, enabling teams to catch issues before they ship.",
     stack: ["Node.js", "HTML Parser", "Express", "TypeScript"],
+    liveUrl: "https://vbuild-beacon.vercel.app/",
   },
   {
     slug: "brew-and-bloom",
@@ -157,6 +159,7 @@ export const projects: Project[] = [
     solution: "A single-page marketing site built with React, TypeScript, and Tailwind CSS featuring scroll-driven animations powered by GSAP and Lenis smooth scrolling, including pinned horizontal card carousels, chapter-based image transitions, and a scroll-linked wordmark fill effect. Designed for instant deployment to any static host.",
     outcome: "A polished, animation-rich brand experience that loads instantly and deploys anywhere.",
     stack: ["React", "TypeScript", "Tailwind CSS", "GSAP", "Lenis", "Vite"],
+    liveUrl: "https://vbuild-coffee.vercel.app/",
   },
 ];
 
