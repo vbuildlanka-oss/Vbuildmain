@@ -1,8 +1,6 @@
-import atlasImage from "@/assets/project-atlas.webp";
-import northstarImage from "@/assets/project-northstar.webp";
-import apertureImage from "@/assets/project-aperture.webp";
 import irisImage from "@/assets/iris.webp";
 import beaconImage from "@/assets/beacon.webp";
+import brewImage from "@/assets/brew.webp";
 
 export type Service = {
   slug: string;
@@ -150,26 +148,15 @@ export const projects: Project[] = [
     stack: ["Node.js", "HTML Parser", "Express", "TypeScript"],
   },
   {
-    slug: "aperture",
-    title: "Aperture",
-    copy: "A cinematic product experience for a new category of spatial computing hardware.",
-    tags: ["WebGL", "GSAP", "3D"],
-    image: apertureImage,
-    problem: "A new hardware category needed a launch experience that conveyed the feeling, not just specs.",
-    solution: "A scroll-driven 3D narrative with bespoke transitions and a fully responsive build.",
-    outcome: "Best-in-class launch engagement and a 2.4x lift in pre-order conversion.",
-    stack: ["React", "Three.js", "GSAP", "TypeScript"],
-  },
-  {
-    slug: "signal",
-    title: "Signal Concierge",
-    copy: "A customer-facing AI concierge embedded into a premium hospitality platform.",
-    tags: ["AI Agents", "Voice", "Realtime"],
-    image: atlasImage,
-    problem: "Guests wanted instant, on-brand answers without waiting on concierge staff.",
-    solution: "A multilingual voice + chat agent with live tool-use into the booking system.",
-    outcome: "Deflected 40% of routine guest requests while raising satisfaction scores.",
-    stack: ["React", "OpenAI Realtime", "Node", "Twilio"],
+    slug: "brew-and-bloom",
+    title: "Brew & Bloom",
+    copy: "A single-page marketing site for a specialty coffee roastery with scroll-driven animations.",
+    tags: ["React", "GSAP", "Tailwind"],
+    image: brewImage,
+    problem: "The roastery needed a web presence that felt as craft and intentional as their beans — not a generic template.",
+    solution: "A single-page marketing site built with React, TypeScript, and Tailwind CSS featuring scroll-driven animations powered by GSAP and Lenis smooth scrolling, including pinned horizontal card carousels, chapter-based image transitions, and a scroll-linked wordmark fill effect. Designed for instant deployment to any static host.",
+    outcome: "A polished, animation-rich brand experience that loads instantly and deploys anywhere.",
+    stack: ["React", "TypeScript", "Tailwind CSS", "GSAP", "Lenis", "Vite"],
   },
 ];
 
