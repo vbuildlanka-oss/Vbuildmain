@@ -2,6 +2,7 @@ import atlasImage from "@/assets/project-atlas.webp";
 import northstarImage from "@/assets/project-northstar.webp";
 import apertureImage from "@/assets/project-aperture.webp";
 import irisImage from "@/assets/iris.webp";
+import beaconImage from "@/assets/beacon.webp";
 
 export type Service = {
   slug: string;
@@ -138,15 +139,15 @@ export const projects: Project[] = [
     stack: ["CLIP ViT-B/32", "Transformers.js", "ONNX Runtime", "React", "TypeScript", "Vite"],
   },
   {
-    slug: "northstar",
-    title: "Northstar OS",
-    copy: "A unified operations platform designed for a fast-growing logistics network.",
-    tags: ["TypeScript", "Automation", "Cloud"],
-    image: northstarImage,
-    problem: "Operations were scattered across five disconnected tools, each with its own data.",
-    solution: "A single platform unifying dispatch, tracking, and billing with automation across.",
-    outcome: "Reduced manual ops effort by 60% across the dispatch team.",
-    stack: ["Next.js", "Node", "Postgres", "AWS", "Temporal"],
+    slug: "beacon",
+    title: "Beacon",
+    copy: "A real-time website auditor that scores any URL on performance, SEO, security, and best practices.",
+    tags: ["Node.js", "Auditing", "Web"],
+    image: beaconImage,
+    problem: "Teams had no quick, zero-config way to check a page's health without running complex CLI tools or signing up for SaaS dashboards.",
+    solution: "Paste any URL and instantly get a scored A–F report. Built with Node.js, Beacon fetches the live page, parses its HTML, and runs it through a comprehensive checklist — all stateless, with no signups or configuration required.",
+    outcome: "Instant visibility into page quality, enabling teams to catch issues before they ship.",
+    stack: ["Node.js", "HTML Parser", "Express", "TypeScript"],
   },
   {
     slug: "aperture",
