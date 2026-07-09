@@ -66,15 +66,15 @@ function ServiceDetail() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-5 py-20 md:px-10 md:py-32">
+      <main className="mx-auto max-w-7xl px-5 py-14 md:px-10 md:py-24 lg:py-32">
         <section data-reveal className="max-w-4xl">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Service</p>
-          <h1 className="mt-6 font-display text-5xl font-medium leading-[1.02] tracking-[-0.05em] md:text-8xl">{service.title}</h1>
-          <p className="mt-8 max-w-2xl text-lg leading-8 text-muted-foreground">{service.long}</p>
+          <h1 className="mt-4 font-display text-3xl font-medium leading-[1.05] tracking-[-0.04em] sm:text-4xl md:mt-6 md:text-5xl lg:text-8xl">{service.title}</h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground md:mt-8 md:text-lg md:leading-8">{service.long}</p>
         </section>
 
-        <section data-reveal className="mt-24 grid gap-12 border-t border-border pt-16 lg:grid-cols-[.4fr_1fr]">
-          <h2 className="font-display text-3xl font-medium tracking-[-0.03em] md:text-4xl">What's included</h2>
+        <section data-reveal className="mt-14 grid gap-8 border-t border-border pt-10 md:mt-24 md:gap-12 md:pt-16 lg:grid-cols-[.4fr_1fr]">
+          <h2 className="font-display text-2xl font-medium tracking-[-0.03em] sm:text-3xl md:text-4xl">What's included</h2>
           <ul className="space-y-4">
             {service.includes.map((item: string) => (
               <li key={item} className="flex items-start gap-3 border-b border-border pb-4 text-base text-foreground">
@@ -84,8 +84,8 @@ function ServiceDetail() {
           </ul>
         </section>
 
-        <section data-reveal className="mt-24 grid gap-12 border-t border-border pt-16 lg:grid-cols-[.4fr_1fr]">
-          <h2 className="font-display text-3xl font-medium tracking-[-0.03em] md:text-4xl">Process</h2>
+        <section data-reveal className="mt-14 grid gap-8 border-t border-border pt-10 md:mt-24 md:gap-12 md:pt-16 lg:grid-cols-[.4fr_1fr]">
+          <h2 className="font-display text-2xl font-medium tracking-[-0.03em] sm:text-3xl md:text-4xl">Process</h2>
           <ol className="grid gap-6 sm:grid-cols-2">
             {service.process.map((p: {step:string;detail:string}, i: number) => (
               <li key={p.step} className="rounded-2xl border border-border bg-card/40 p-6">
@@ -97,8 +97,8 @@ function ServiceDetail() {
           </ol>
         </section>
 
-        <section data-reveal className="mt-24 grid gap-12 border-t border-border pt-16 lg:grid-cols-[.4fr_1fr]">
-          <h2 className="font-display text-3xl font-medium tracking-[-0.03em] md:text-4xl">Example use cases</h2>
+        <section data-reveal className="mt-14 grid gap-8 border-t border-border pt-10 md:mt-24 md:gap-12 md:pt-16 lg:grid-cols-[.4fr_1fr]">
+          <h2 className="font-display text-2xl font-medium tracking-[-0.03em] sm:text-3xl md:text-4xl">Example use cases</h2>
           <ul className="space-y-4">
             {service.useCases.map((u: string) => (
               <li key={u} className="border-b border-border pb-4 text-base text-muted-foreground">{u}</li>
@@ -106,10 +106,10 @@ function ServiceDetail() {
           </ul>
         </section>
 
-        <section data-reveal className="mt-24 flex flex-col items-start justify-between gap-6 border-t border-border pt-16 sm:flex-row sm:items-center">
+        <section data-reveal className="mt-14 flex flex-col items-start justify-between gap-5 border-t border-border pt-10 sm:flex-row sm:items-center md:mt-24 md:gap-6 md:pt-16">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Next step</p>
-            <h3 className="mt-4 font-display text-3xl font-medium tracking-[-0.04em] md:text-4xl">Let's talk specifics.</h3>
+            <h3 className="mt-3 font-display text-2xl font-medium tracking-[-0.04em] sm:text-3xl md:mt-4 md:text-4xl">Let's talk specifics.</h3>
           </div>
           <Button variant="hero" size="lg" onClick={openWhatsApp}>Start on WhatsApp <ArrowRight /></Button>
         </section>

@@ -287,44 +287,44 @@ function Index() {
         </section>
 
         {/* ABOUT / FOUNDER */}
-        <section id="about" className="section-rule px-5 py-24 md:px-10 md:py-36">
-          <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
+        <section id="about" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
+          <div className="mx-auto grid max-w-7xl gap-10 md:gap-16 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
             <div data-reveal>
-              <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">About</p>
-              <h2 className="max-w-4xl font-display text-4xl font-medium leading-[1.05] tracking-[-0.045em] md:text-7xl">Small by design.<br /><span className="text-muted-foreground">Ambitious by nature.</span></h2>
-              <p className="mt-8 max-w-xl text-lg leading-8 text-muted-foreground">VBUILD partners with forward-thinking teams to turn complex ideas into clear, useful products. Strategy, design, and engineering work as one — from the first sketch to production.</p>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">About</p>
+              <h2 className="max-w-4xl font-display text-3xl font-medium leading-[1.08] tracking-[-0.04em] sm:text-4xl md:text-6xl lg:text-7xl">Small by design.<br /><span className="text-muted-foreground">Ambitious by nature.</span></h2>
+              <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground md:mt-8 md:text-lg md:leading-8">VBUILD partners with forward-thinking teams to turn complex ideas into clear, useful products. Strategy, design, and engineering work as one — from the first sketch to production.</p>
             </div>
-            <article data-reveal className="glass-panel overflow-hidden rounded-3xl p-3">
-              <img src={founderImage} alt="Portrait of Lathurshan Muralitharan, founder of VBUILD" loading="lazy" width={1254} height={1254} className="aspect-[4/3] w-full rounded-2xl object-cover object-[center_38%]" />
-              <div className="flex items-end justify-between gap-6 p-5 md:p-7">
-                <div><p className="font-display text-xl font-semibold">Lathurshan Muralitharan</p><p className="mt-1 text-sm text-muted-foreground">Founder, VBUILD</p></div>
-                <p className="max-w-48 text-right text-xs leading-5 text-muted-foreground">Computer Science Graduate<br />University of Waterloo</p>
+            <article data-reveal className="glass-panel overflow-hidden rounded-2xl p-2 md:rounded-3xl md:p-3">
+              <img src={founderImage} alt="Portrait of Lathurshan Muralitharan, founder of VBUILD" loading="lazy" width={1254} height={1254} className="aspect-[4/3] w-full rounded-xl object-cover object-[center_38%] md:rounded-2xl" />
+              <div className="flex flex-col gap-2 p-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6 md:p-7">
+                <div><p className="font-display text-lg font-semibold md:text-xl">Lathurshan Muralitharan</p><p className="mt-0.5 text-sm text-muted-foreground">Founder, VBUILD</p></div>
+                <p className="text-xs leading-5 text-muted-foreground sm:max-w-48 sm:text-right">Computer Science Graduate<br />University of Waterloo</p>
               </div>
             </article>
           </div>
         </section>
 
         {/* SERVICES */}
-        <section id="services" className="section-rule px-5 py-24 md:px-10 md:py-36">
+        <section id="services" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
           <div className="mx-auto max-w-7xl">
-            <div data-reveal className="mb-14 grid gap-8 lg:grid-cols-[1fr_.55fr] lg:items-end">
+            <div data-reveal className="mb-10 grid gap-6 md:mb-14 md:gap-8 lg:grid-cols-[1fr_.55fr] lg:items-end">
               <div>
-                <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Services</p>
-                <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">Built end to end.</h2>
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">Services</p>
+                <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">Built end to end.</h2>
               </div>
               <p className="max-w-sm text-sm leading-6 text-muted-foreground">One focused studio across experience, intelligence, and infrastructure. Tap a service to see how we approach it.</p>
             </div>
-            <div data-stagger className="grid gap-4 md:grid-cols-2">
+            <div data-stagger className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               {services.map((s) => (
                 <Link
                   key={s.slug}
                   to="/services/$slug"
                   params={{ slug: s.slug }}
-                  className="group relative flex min-h-[220px] flex-col justify-between rounded-2xl border border-border bg-card/40 p-7 transition-[border-color,transform] duration-300 hover:-translate-y-1 hover:border-primary/50 md:p-9"
+                  className="group relative flex min-h-[180px] flex-col justify-between rounded-2xl border border-border bg-card/40 p-5 transition-[border-color,transform] duration-300 hover:-translate-y-1 hover:border-primary/50 sm:min-h-[200px] md:min-h-[220px] md:p-7 lg:p-9"
                 >
-                  <h3 className="font-display text-2xl font-medium tracking-[-0.03em] md:text-3xl">{s.title}</h3>
-                  <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">{s.copy}</p>
-                  <span className="mt-8 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  <h3 className="font-display text-xl font-medium tracking-[-0.03em] sm:text-2xl md:text-3xl">{s.title}</h3>
+                  <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground md:mt-4">{s.copy}</p>
+                  <span className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary md:mt-8">
                     Explore <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
                 </Link>
@@ -335,24 +335,24 @@ function Index() {
 
         {/* SELECTED WORK */}
         <section id="work" className="section-rule">
-          <div className="px-5 pt-24 md:px-10 md:pt-36">
+          <div className="px-5 pt-16 md:px-10 md:pt-28 lg:pt-36">
             <div data-reveal className="mx-auto max-w-7xl">
-              <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Selected work</p>
-              <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">Systems with a point of view.</h2>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">Selected work</p>
+              <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">Systems with a point of view.</h2>
             </div>
           </div>
 
           {/* Mobile / tablet vertical stack */}
-          <div data-mobile-work className="mx-auto mt-14 max-w-7xl space-y-12 px-5 pb-24 md:px-10 md:pb-36 lg:hidden">
+          <div data-mobile-work className="mx-auto mt-10 max-w-7xl space-y-10 px-5 pb-16 md:mt-14 md:space-y-12 md:px-10 md:pb-28 lg:hidden lg:pb-36">
             {projects.map((p) => (
               <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} className="group block">
-                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted">
+                <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-muted md:rounded-2xl">
                   <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 active:scale-[1.02]" />
                 </div>
-                <div className="mt-5">
-                  <h3 className="font-display text-2xl font-medium tracking-[-0.03em]">{p.title}</h3>
-                  <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">{p.copy}</p>
-                  <p className="mt-4 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{p.tags.join(" · ")}</p>
+                <div className="mt-4 md:mt-5">
+                  <h3 className="font-display text-xl font-medium tracking-[-0.03em] sm:text-2xl">{p.title}</h3>
+                  <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground md:mt-3">{p.copy}</p>
+                  <p className="mt-3 text-[10px] uppercase tracking-[0.16em] text-muted-foreground md:mt-4">{p.tags.join(" · ")}</p>
                 </div>
               </Link>
             ))}
@@ -386,18 +386,18 @@ function Index() {
         </section>
 
         {/* PROCESS */}
-        <section id="process" className="section-rule px-5 py-24 md:px-10 md:py-36">
+        <section id="process" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
           <div className="mx-auto max-w-7xl">
-            <div data-reveal className="mb-14 max-w-3xl">
-              <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Process</p>
-              <h2 className="font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">A clear path, every time.</h2>
+            <div data-reveal className="mb-10 max-w-3xl md:mb-14">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">Process</p>
+              <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">A clear path, every time.</h2>
             </div>
-            <ol data-stagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <ol data-stagger className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
               {process.map((p, i) => (
-                <li key={p.step} className="rounded-2xl border border-border bg-card/40 p-7">
+                <li key={p.step} className="rounded-xl border border-border bg-card/40 p-5 md:rounded-2xl md:p-7">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">0{i + 1}</p>
-                  <p className="mt-5 font-display text-2xl font-medium tracking-[-0.03em]">{p.step}</p>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{p.detail}</p>
+                  <p className="mt-3 font-display text-xl font-medium tracking-[-0.03em] md:mt-5 md:text-2xl">{p.step}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground md:mt-3">{p.detail}</p>
                 </li>
               ))}
             </ol>
@@ -405,10 +405,10 @@ function Index() {
         </section>
 
         {/* TECH STACK MARQUEE */}
-        <section className="section-rule overflow-hidden py-20 md:py-28">
-          <div data-reveal className="mx-auto mb-10 max-w-7xl px-5 md:px-10">
+        <section className="section-rule overflow-hidden py-14 md:py-20 lg:py-28">
+          <div data-reveal className="mx-auto mb-8 max-w-7xl px-5 md:mb-10 md:px-10">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Stack</p>
-            <h2 className="mt-4 font-display text-3xl font-medium tracking-[-0.04em] md:text-5xl">Tools we ship with.</h2>
+            <h2 className="mt-3 font-display text-2xl font-medium tracking-[-0.03em] sm:text-3xl md:mt-4 md:text-5xl">Tools we ship with.</h2>
           </div>
           <div className="group relative">
             <div className="vbuild-marquee flex w-max gap-12 will-change-transform group-hover:[animation-play-state:paused]">
@@ -420,22 +420,22 @@ function Index() {
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="section-rule px-5 py-24 md:px-10 md:py-36">
-          <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[.4fr_1fr]">
+        <section id="faq" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
+          <div className="mx-auto grid max-w-7xl gap-8 md:gap-16 lg:grid-cols-[.4fr_1fr]">
             <div data-reveal>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">FAQ</p>
-              <h2 className="mt-6 font-display text-5xl font-medium tracking-[-0.05em] md:text-7xl">Good questions.</h2>
+              <h2 className="mt-4 font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:mt-6 md:text-5xl lg:text-7xl">Good questions.</h2>
             </div>
             <Accordion data-reveal type="single" collapsible className="w-full">
               {faqs.map((f, i) => (
                 <AccordionItem key={f.q} value={`item-${i}`} className="border-border">
-                  <AccordionTrigger className="py-6 text-left font-display text-lg font-medium tracking-[-0.02em] md:text-xl [&>svg]:hidden group">
-                    <span className="flex w-full items-center justify-between gap-4">
+                  <AccordionTrigger className="py-5 text-left font-display text-base font-medium tracking-[-0.02em] sm:text-lg md:py-6 md:text-xl [&>svg]:hidden group">
+                    <span className="flex w-full items-center justify-between gap-3 md:gap-4">
                       {f.q}
-                      <Plus className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-45" />
+                      <Plus className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-45 md:h-5 md:w-5" />
                     </span>
                   </AccordionTrigger>
-                  <AccordionContent className="pb-6 text-base leading-7 text-muted-foreground">{f.a}</AccordionContent>
+                  <AccordionContent className="pb-5 text-sm leading-7 text-muted-foreground md:pb-6 md:text-base">{f.a}</AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
@@ -443,18 +443,18 @@ function Index() {
         </section>
 
         {/* CONTACT */}
-        <section id="contact" className="section-rule px-5 py-24 md:px-10 md:py-36">
-          <div data-reveal className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+        <section id="contact" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
+          <div data-reveal className="mx-auto grid max-w-7xl gap-8 md:gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Have a challenge in mind?</p>
-              <h2 className="mt-7 max-w-4xl font-display text-5xl font-medium tracking-[-0.055em] md:text-8xl">Let's build what's next.</h2>
-              <p className="mt-6 max-w-md text-base leading-7 text-muted-foreground">Tell us where you're headed. We'll bring focus, engineering, and momentum.</p>
-              <p className="mt-4 text-sm text-muted-foreground">Or email <a href="mailto:hello@vbuild.dev" className="text-foreground underline-offset-4 hover:underline">hello@vbuild.dev</a></p>
+              <h2 className="mt-5 max-w-4xl font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:mt-7 md:text-5xl lg:text-8xl">Let's build what's next.</h2>
+              <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground md:mt-6 md:text-base">Tell us where you're headed. We'll bring focus, engineering, and momentum.</p>
+              <p className="mt-3 text-sm text-muted-foreground md:mt-4">Or email <a href="mailto:hello@vbuild.dev" className="text-foreground underline-offset-4 hover:underline">hello@vbuild.dev</a></p>
             </div>
             <Button variant="hero" size="lg" onClick={openContactDialog}>Start a project <ArrowRight /></Button>
           </div>
 
-          <footer className="mx-auto mt-24 grid max-w-7xl gap-6 border-t border-border pt-7 text-xs text-muted-foreground sm:grid-cols-3">
+          <footer className="mx-auto mt-16 grid max-w-7xl gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:grid-cols-3 md:mt-24 md:gap-6 md:pt-7">
             <p>&copy; 2026 VBUILD. All rights reserved.</p>
             <p className="sm:text-center">Toronto, Canada &middot; Working globally</p>
             <div className="flex items-center gap-5 sm:justify-end">
