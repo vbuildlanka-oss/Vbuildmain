@@ -1,6 +1,7 @@
 import irisImage from "@/assets/iris.webp";
 import beaconImage from "@/assets/beacon.webp";
 import brewImage from "@/assets/brew.webp";
+import mustangImage from "@/assets/mustang.webp";
 
 export type Service = {
   slug: string;
@@ -160,6 +161,18 @@ export const projects: Project[] = [
     outcome: "A polished, animation-rich brand experience that loads instantly and deploys anywhere.",
     stack: ["React", "TypeScript", "Tailwind CSS", "GSAP", "Lenis", "Vite"],
     liveUrl: "https://vbuild-coffee.vercel.app/",
+  },
+  {
+    slug: "shelby-gt500",
+    title: "Shelby GT500",
+    copy: "An interactive 3D parallax web experience for the Shelby GT500, driven by scroll and reactive to the cursor.",
+    tags: ["GSAP", "Lenis", "Canvas"],
+    image: mustangImage,
+    problem: "A flagship muscle car deserved more than a static gallery — it needed a web experience that captured the sense of motion, depth, and raw presence you feel standing next to the real thing.",
+    solution: "A scroll-driven HTML5 Canvas frame animation renders the GT500 turning through a full sequence as you scroll, while cursor-reactive depth layers create a real-time 3D parallax that responds to mouse movement. GSAP orchestrates the timeline and Lenis provides weighted smooth scrolling, with spec reveals synced precisely to the animation's key frames.",
+    outcome: "A cinematic, showroom-grade product experience that turns scrolling into an immersive walkaround.",
+    stack: ["HTML5 Canvas", "GSAP", "Lenis", "React", "TypeScript", "Vite"],
+    liveUrl: "https://mustang-vbuild.vercel.app/",
   },
 ];
 
