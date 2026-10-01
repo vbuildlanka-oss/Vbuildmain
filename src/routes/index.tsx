@@ -61,7 +61,7 @@ function Index() {
     gsap.registerPlugin(ScrollTrigger);
 
     // Lenis — smooth, weighted scroll
-    const lenis = new Lenis({ duration: 1.4, smoothWheel: !reduceMotion, smoothTouch: false } as any);
+    const lenis = new Lenis({ lerp: 0.14, smoothWheel: !reduceMotion, syncTouch: false, wheelMultiplier: 1 });
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
     lenis.on("scroll", ScrollTrigger.update);
@@ -89,7 +89,7 @@ function Index() {
             start: "top top",
             end: () => `+=${window.innerHeight * items.length}`,
             pin,
-            scrub: 0.6,
+            scrub: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
             onUpdate: (self) => setActive(Math.min(items.length - 1, Math.floor(self.progress * items.length))),
@@ -123,7 +123,7 @@ function Index() {
             trigger: wrap,
             start: "top top",
             end: () => `+=${distance()}`,
-            scrub: 1,
+            scrub: 0.4,
             pin: true,
             invalidateOnRefresh: true,
           },
@@ -399,7 +399,7 @@ function Index() {
             {projects.map((p) => (
               <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} className="group block">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-muted md:rounded-2xl">
-                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 active:scale-[1.02]" />
+                  <img src={p.image} alt={p.title} loading="lazy" decoding="async" width={1600} height={893} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 active:scale-[1.02]" />
                 </div>
                 <div className="mt-4 md:mt-5">
                   <h3 className="font-display text-xl font-medium tracking-[-0.03em] sm:text-2xl">{p.title}</h3>
@@ -420,7 +420,7 @@ function Index() {
                   params={{ slug: p.slug }}
                   className="group relative block h-[70vh] w-[60vw] shrink-0 overflow-hidden rounded-3xl border border-border bg-card/30"
                 >
-                  <img src={p.image} alt={p.title} loading="lazy" width={1280} height={768} className="absolute inset-0 h-full w-full object-cover opacity-65 grayscale transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 group-hover:grayscale-0" />
+                  <img src={p.image} alt={p.title} loading="lazy" decoding="async" width={1600} height={893} className="absolute inset-0 h-full w-full object-cover opacity-65 grayscale transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 group-hover:grayscale-0" />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                   <div className="relative flex h-full flex-col justify-end p-10">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-primary">{p.tags.join(" · ")}</p>

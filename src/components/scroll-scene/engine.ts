@@ -49,6 +49,8 @@ const MODEL_HEIGHT = 2.2;
 const FLOOR_Y = -MODEL_HEIGHT / 2;
 const FOV = 30;
 const TONE_EXPOSURE = 1.1;
+/** Objects on this layer are seen by the main camera but not by the floor reflection. */
+const NO_REFLECT_LAYER = 2;
 /** Eye centres on the visor, in the source model's units (see nexbot.glb). */
 const EYE_X = 13;
 const EYE_Y = 235;
@@ -220,12 +222,12 @@ export class NexbotEngine {
   private readonly resizeObserver: ResizeObserver;
 
   // Lights
-  private readonly key = new THREE.SpotLight(WARM, 5.5, 0, 0.55, 0.85, 0);
-  private readonly rimIce = new THREE.SpotLight(ICE, 9, 0, 0.6, 0.7, 0);
-  private readonly rimViolet = new THREE.SpotLight(VIOLET, 8, 0, 0.6, 0.7, 0);
-  private readonly top = new THREE.SpotLight(0xffffff, 3, 0, 0.32, 0.9, 0);
-  private readonly fill = new THREE.HemisphereLight(0x1b2540, 0x000000, 0.35);
-  private readonly chestGlow = new THREE.PointLight(ICE, 0, 2.4, 1.6);
+  // Directional only (no cones / falloff) to keep per-pixel shading cheap.
+  private readonly key = new THREE.DirectionalLight(WARM, 2.1);
+  private readonly rimIce = new THREE.DirectionalLight(ICE, 3.6);
+  private readonly rimViolet = new THREE.DirectionalLight(VIOLET, 3.2);
+  /** Sky = soft top light on the helmet and shoulders, ground = black. */
+  private readonly fill = new THREE.HemisphereLight(0x3a4258, 0x000000, 0.9);
 
   // Post-processing (quality ≥ 1)
   private composer?: EffectComposer;
@@ -279,6 +281,13 @@ export class NexbotEngine {
   private needsRender = true;
   private pixelRatio: number;
   private readonly maxPixelRatio: number;
+  /** Max rendered pixels for the tier (a 1440×900 @2x screen would be 5.2 MP). */
+  private readonly pixelBudget: number;
+  /** Shrinks the budget when the device can't keep up (adaptQuality). */
+  private prScale = 1;
+  private lastScrollY = -1;
+  private frameIndex = 0;
+  private idleFrames = 0;
   private frameTimes: number[] = [];
   private viewport = { w: 1, h: 1 };
 
@@ -310,8 +319,9 @@ export class NexbotEngine {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = TONE_EXPOSURE;
 
-    this.maxPixelRatio = opts.quality === 2 ? 1.75 : 1.5;
-    this.pixelRatio = Math.min(window.devicePixelRatio || 1, this.maxPixelRatio);
+    this.maxPixelRatio = opts.quality === 2 ? 1.5 : 1.25;
+    this.pixelBudget = [0.9e6, 1.15e6, 1.6e6][opts.quality];
+    this.pixelRatio = 1;
     this.renderer.setPixelRatio(this.pixelRatio);
     this.u.uPixelRatio.value = this.pixelRatio;
 
@@ -357,9 +367,7 @@ export class NexbotEngine {
     // Rims: coloured edges from behind, so the silhouette always reads against the dark.
     this.rimIce.position.set(3.6, 2.4, -3.4);
     this.rimViolet.position.set(-3.6, 1.6, -3.0);
-    // Top: a narrow pool that catches the helmet and shoulders.
-    this.top.position.set(0.2, 6, 0.8);
-    for (const l of [this.key, this.rimIce, this.rimViolet, this.top]) {
+    for (const l of [this.key, this.rimIce, this.rimViolet]) {
       l.target = aim;
       this.scene.add(l);
     }
@@ -367,11 +375,17 @@ export class NexbotEngine {
   }
 
   private setupComposer() {
-    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 });
     this.composer = new EffectComposer(this.renderer, rt);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.45, 0.6, 0.9);
-    this.composer.addPass(this.bloom);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.45, 0.6, 0.9);
+    // Bloom is a soft, wide blur, so it doesn't need many pixels: run its mip chain at
+    // half the render size (UnrealBloomPass halves again internally → quarter res).
+    const setBloomSize = bloom.setSize.bind(bloom);
+    bloom.setSize = (w: number, h: number) =>
+      setBloomSize(Math.max(1, Math.round(w * 0.5)), Math.max(1, Math.round(h * 0.5)));
+    this.bloom = bloom;
+    this.composer.addPass(bloom);
     this.composer.addPass(new OutputPass());
   }
 
@@ -428,14 +442,15 @@ export class NexbotEngine {
     this.points = this.buildPoints();
     this.ring = this.buildRing(bounds.min.y);
     this.robot.add(this.points, this.ring);
-    this.chestGlow.position.set(0, 0.45, 0.55);
-    this.robot.add(this.chestGlow);
 
     this.buildFloor(bounds.min.y);
     this.halo = this.buildHalo();
     this.wordmark = this.buildWordmark();
     this.dust = this.buildDust();
     this.scene.add(this.halo, this.dust);
+    // Particles, dust and the halo don't need to appear in the floor reflection.
+    for (const o of [this.halo, this.dust, this.points]) o.layers.set(NO_REFLECT_LAYER);
+    this.camera.layers.enable(NO_REFLECT_LAYER);
     if (this.wordmark) this.scene.add(this.wordmark);
 
     // Compile every program up-front so the first scroll never hitches.
@@ -500,9 +515,9 @@ export class NexbotEngine {
   private createSolidMaterial(
     kind: MaterialKind,
     built: Uniform<number>,
-  ): THREE.MeshPhysicalMaterial {
+  ): THREE.MeshStandardMaterial {
     const hi = this.quality > 0;
-    const mat =
+    const mat: THREE.MeshStandardMaterial =
       kind === "visor"
         ? new THREE.MeshPhysicalMaterial({
             color: 0x040407,
@@ -513,17 +528,8 @@ export class NexbotEngine {
             envMapIntensity: 1.6,
           })
         : kind === "shell"
-          ? new THREE.MeshPhysicalMaterial({
-              color: 0x52565f,
-              metalness: 0.08,
-              roughness: 0.42,
-              clearcoat: hi ? 0.35 : 0,
-              clearcoatRoughness: 0.5,
-              sheen: hi ? 0.6 : 0,
-              sheenRoughness: 0.5,
-              sheenColor: new THREE.Color(0xb9c3d6),
-            })
-          : new THREE.MeshPhysicalMaterial({
+          ? new THREE.MeshStandardMaterial({ color: 0x62666f, metalness: 0.1, roughness: 0.4 })
+          : new THREE.MeshStandardMaterial({
               color: 0x101116,
               metalness: 0.95,
               roughness: 0.22,
@@ -809,7 +815,7 @@ export class NexbotEngine {
     surface.setAttribute("normal", new THREE.Float32BufferAttribute(nrmArr, 3));
     const sampler = new MeshSurfaceSampler(new THREE.Mesh(surface)).build();
 
-    const count = this.quality > 0 ? 8000 : 3500;
+    const count = this.quality > 0 ? 5000 : 2500;
     const pos = new Float32Array(count * 3);
     const nrm = new Float32Array(count * 3);
     const rnd = new Float32Array(count * 4);
@@ -849,7 +855,7 @@ export class NexbotEngine {
           p.xz = mat2(c, -sn, sn, c) * p.xz;
           p += aNormal * 0.01 * sin(uTime * 2.0 + s * 40.0);
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
-          gl_PointSize = min(uPointSize * uPixelRatio * (0.45 + s * 0.9) / -mv.z, 48.0);
+          gl_PointSize = min(uPointSize * uPixelRatio * (0.45 + s * 0.9) / -mv.z, 18.0 * uPixelRatio);
           gl_Position = projectionMatrix * mv;
           float twinkle = 0.65 + 0.35 * sin(uTime * (1.0 + s * 2.0) + s * 60.0);
           vAlpha = uPoints * twinkle * (0.35 + 0.65 * fract(s * 13.7)) * smoothstep(0.05, 0.4, -mv.z);
@@ -1031,15 +1037,14 @@ export class NexbotEngine {
         uniform float uTime, uHalo, uPower;
         uniform vec3 uIce, uViolet;
         varying vec2 vUv;
-        ${NOISE_GLSL}
         void main() {
           vec2 q = (vUv - 0.5) * 2.0;
           // Light source sits just above the head.
           vec2 s = q - vec2(0.0, 0.28);
           float r = length(s);
           float ang = atan(s.y, s.x);
-          float rays = nexNoise(vec3(ang * 4.0, uTime * 0.12, 0.0)) * nexNoise(vec3(ang * 11.0 + 3.0, uTime * 0.07, 1.0));
-          rays = pow(rays, 1.6) * smoothstep(1.0, 0.1, r) * smoothstep(0.02, 0.2, r);
+          float rays = (0.5 + 0.5 * sin(ang * 7.0 + uTime * 0.21)) * (0.5 + 0.5 * sin(ang * 13.0 - uTime * 0.13 + 1.7));
+          rays = rays * rays * smoothstep(1.0, 0.1, r) * smoothstep(0.02, 0.2, r);
           float core = exp(-r * r * 9.0);
           float wide = exp(-r * r * 2.2);
           vec3 col = uViolet * wide * 0.09 + mix(uIce, vec3(1.0), 0.3) * core * 0.16 + mix(uViolet, uIce, 0.45) * rays * 0.14;
@@ -1054,7 +1059,7 @@ export class NexbotEngine {
     });
     this.disposables.push(mat);
     const halo = new THREE.Mesh(geo, mat);
-    halo.scale.setScalar(9);
+    halo.scale.setScalar(7);
     halo.position.set(0, 0.35, -3.2);
     halo.renderOrder = -1;
     return halo;
@@ -1122,7 +1127,7 @@ export class NexbotEngine {
 
   /** Slow-drifting dust motes in the light; out-of-focus near the lens. */
   private buildDust(): THREE.Points {
-    const count = this.quality > 0 ? 900 : 400;
+    const count = this.quality > 0 ? 420 : 220;
     const rand = rng(77);
     const pos = new Float32Array(count * 3);
     const rnd = new Float32Array(count);
@@ -1150,8 +1155,8 @@ export class NexbotEngine {
           p.z += cos(uTime * 0.17 + aRand * 20.0) * 0.15;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           float depth = -mv.z;
-          float size = (2.0 + aRand * 3.0) + 22.0 * smoothstep(1.6, 0.2, depth);
-          gl_PointSize = min(size * uPixelRatio * (2.5 / max(depth, 0.3)), 64.0);
+          float size = (2.0 + aRand * 3.0) + 8.0 * smoothstep(1.6, 0.2, depth);
+          gl_PointSize = min(size * uPixelRatio * (2.5 / max(depth, 0.3)), 14.0 * uPixelRatio);
           gl_Position = projectionMatrix * mv;
           // Brighter in the backlight cone, fainter when huge (out of focus).
           float lit = exp(-pow(length(p.xz - vec2(0.0, -1.5)), 2.0) * 0.12);
@@ -1226,14 +1231,22 @@ export class NexbotEngine {
     const w = this.container.clientWidth || window.innerWidth;
     const h = this.container.clientHeight || window.innerHeight;
     this.viewport = { w, h };
+    // Fit the render to the pixel budget; the canvas is upscaled by CSS (grain + bloom hide it).
+    const budgetRatio = Math.sqrt((this.pixelBudget * this.prScale) / Math.max(1, w * h));
+    this.pixelRatio = Math.max(
+      0.5,
+      Math.min(window.devicePixelRatio || 1, this.maxPixelRatio, budgetRatio),
+    );
+    this.renderer.setPixelRatio(this.pixelRatio);
+    this.u.uPixelRatio.value = this.pixelRatio;
     this.renderer.setSize(w, h, false);
     if (this.composer) {
       this.composer.setPixelRatio(this.pixelRatio);
       this.composer.setSize(w, h);
     }
     if (this.reflector) {
-      const rw = Math.round(w * this.pixelRatio * 0.5);
-      const rh = Math.round(h * this.pixelRatio * 0.5);
+      const rw = Math.round(w * this.pixelRatio * 0.35);
+      const rh = Math.round(h * this.pixelRatio * 0.35);
       this.reflector.getRenderTarget().setSize(rw, rh);
       (this.reflector.material as THREE.ShaderMaterial).uniforms.uTexel.value.set(1 / rw, 1 / rh);
     }
@@ -1247,18 +1260,19 @@ export class NexbotEngine {
    */
   private adaptQuality(dt: number) {
     this.frameTimes.push(dt);
-    if (this.frameTimes.length < 90) return;
-    const avg = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+    if (this.frameTimes.length < 45) return;
+    const sorted = [...this.frameTimes].sort((a, b) => a - b);
     this.frameTimes.length = 0;
-    if (avg <= 1 / 45) return;
-    if (this.pixelRatio > 1) {
-      this.pixelRatio = Math.max(1, this.pixelRatio - 0.25);
-      this.renderer.setPixelRatio(this.pixelRatio);
-      this.u.uPixelRatio.value = this.pixelRatio;
+    // Median frame time: ignores one-off hitches (tab switches, GC).
+    if (sorted[Math.floor(sorted.length / 2)] <= 1 / 52) return;
+    if (this.prScale > 0.55) {
+      this.prScale = Math.max(0.5, this.prScale * 0.75);
     } else if (this.reflector?.visible) {
       this.dropReflector();
     } else if (this.composer) {
       this.dropComposer();
+    } else {
+      return;
     }
     this.resize();
   }
@@ -1363,7 +1377,7 @@ export class NexbotEngine {
 
     let delta = 0;
     for (const k of STATE_KEYS) {
-      const next = reduced ? t[k] : damp(c[k], t[k], 5.5, dt);
+      const next = reduced ? t[k] : damp(c[k], t[k], 11, dt);
       delta = Math.max(delta, Math.abs(next - c[k]));
       c[k] = next;
     }
@@ -1376,9 +1390,25 @@ export class NexbotEngine {
     }
 
     const opacity = c.opacity * Math.min(1, this.intro * 3);
-    this.container.style.opacity = opacity.toFixed(3);
+    const op = opacity.toFixed(3);
+    if (this.container.style.opacity !== op) this.container.style.opacity = op;
+    // Fully faded out: drop the layer from compositing and skip the GPU entirely.
+    const vis = opacity < 0.004 ? "hidden" : "visible";
+    if (this.container.style.visibility !== vis) this.container.style.visibility = vis;
     if (opacity < 0.004) return;
     if (reduced && delta < 1e-4 && !this.needsRender) return;
+
+    const scrollY = window.scrollY;
+    const moving =
+      delta > 2e-4 ||
+      scrollY !== this.lastScrollY ||
+      Math.abs(this.pointer.tx - this.pointer.x) + Math.abs(this.pointer.ty - this.pointer.y) >
+        1e-3 ||
+      this.intro < 1;
+    this.lastScrollY = scrollY;
+    this.idleFrames = moving ? 0 : this.idleFrames + 1;
+    this.frameIndex++;
+    if (!this.needsRender && this.idleFrames > 30 && this.frameIndex % 2 === 1) return;
     this.needsRender = false;
 
     const introE = 1 - Math.pow(1 - this.intro, 3);
@@ -1445,8 +1475,7 @@ export class NexbotEngine {
     this.key.position.x = -3.4 + Math.sin(this.time * 0.15) * 0.6 + pw * 1.2;
     this.rimIce.intensity = (3.6 + pw * 3.2 + c.explode * 1.5) * lit;
     this.rimViolet.intensity = (3.2 + pw * 2.4 + c.blueprint * 2) * lit;
-    this.top.intensity = (1.1 + pw * 0.8) * lit;
-    this.chestGlow.intensity = pw * 1.2;
+    this.fill.intensity = (0.9 + pw * 0.5) * lit;
 
     if (this.bloom) this.bloom.strength = 0.42 * c.glow;
     if (this.composer) this.composer.render(dt);
