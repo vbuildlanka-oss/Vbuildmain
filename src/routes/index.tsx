@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -12,86 +12,48 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import founderImage from "@/assets/founder-lathurshan.webp";
 import logoImage from "@/assets/vbuild-mark.webp";
 import { services, projects, techStack, faqs } from "@/data/site";
+import { ScrollScene, STORY_TRIGGER_ID } from "@/components/scroll-scene/ScrollScene";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const process = [
-  { step: "Discover", detail: "We map the problem, the audience, and the constraints." },
-  { step: "Design", detail: "Wireframes and a sharp visual direction before any code." },
-  { step: "Build", detail: "Production engineering with weekly demos." },
-  { step: "Ship", detail: "Launch, measure, refine — together." },
-];
-
-const SPLINE_URL = "https://my.spline.design/aibrain-VnvsW1OxElArh6zfIspyafuH/";
-
 /**
- * Deferred Spline embed — avoids blocking initial paint.
- * 1. Waits for idle time (requestIdleCallback) before inserting the iframe.
- * 2. Shows an animated gradient placeholder while loading.
- * 3. Fades the iframe in once it fires its load event.
- * 4. Disables pointer-events so iframe never captures scroll.
- * 5. Hides iframe once user scrolls past hero to free GPU.
+ * The process story. Each chapter drives a pose of NEXBOT in <ScrollScene />
+ * (see components/scroll-scene/timeline.ts): scattered → blueprint → assembled → switched on.
  */
-function SplineEmbed() {
-  const [shouldLoad, setShouldLoad] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const schedule = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
-    const id = schedule(() => setShouldLoad(true), { timeout: 1500 });
-    return () => {
-      if (window.cancelIdleCallback) window.cancelIdleCallback(id as number);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!loaded) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setVisible(entry.isIntersecting),
-      { rootMargin: "200px" },
-    );
-    const hero = document.querySelector("[data-hero]");
-    if (hero) observer.observe(hero);
-    return () => observer.disconnect();
-  }, [loaded]);
-
-  const onIframeLoad = useCallback(() => setLoaded(true), []);
-
-  return (
-    <div data-spline className="pointer-events-none absolute inset-0 will-change-transform">
-      <div
-        aria-hidden="true"
-        className={`absolute inset-0 transition-opacity duration-700 ${loaded ? "opacity-0 pointer-events-none" : "opacity-100"}`}
-      >
-        <div className="h-full w-full animate-pulse bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
-      </div>
-
-      {shouldLoad && (
-        <iframe
-          title="Interactive AI brain"
-          src={SPLINE_URL}
-          frameBorder="0"
-          width="100%"
-          height="100%"
-          loading="eager"
-          onLoad={onIframeLoad}
-          style={{ display: visible ? "block" : "none" }}
-          className={`pointer-events-none h-[calc(100%+5rem)] w-full border-0 transition-opacity duration-1000 ${loaded ? "opacity-75" : "opacity-0"}`}
-        />
-      )}
-
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent via-background/80 to-background" />
-    </div>
-  );
-}
+const chapters = [
+  {
+    step: "Listen",
+    title: "Every project starts in pieces.",
+    detail:
+      "A half-written brief, a spreadsheet nobody trusts, three opinions on what the product should be. We sit with your team and your users until the pieces start to make sense.",
+  },
+  {
+    step: "Plan",
+    title: "Then we lay it all out.",
+    detail:
+      "Before anyone writes code, every screen, flow and integration is on the table where you can see it. Changing your mind is cheap at this stage, so we encourage it.",
+  },
+  {
+    step: "Build",
+    title: "We put it together, properly.",
+    detail:
+      "Typed, tested, reviewed code, shipped in small steps. You get something you can click every week, not a big reveal at the end.",
+  },
+  {
+    step: "Launch",
+    title: "And then it comes to life.",
+    detail:
+      "We launch it, watch how real people use it and keep tuning. The AI, automations and integrations keep working long after the launch party.",
+  },
+];
 
 function Index() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -104,8 +66,70 @@ function Index() {
     gsap.ticker.add(onTick);
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.lagSmoothing(0);
+    lenisRef.current = lenis;
 
     const context = gsap.context(() => {
+      const mm = gsap.matchMedia();
+
+      // === PROCESS STORY — pinned 3D scrollytelling (created first: its pin
+      // spacing shifts every trigger below it). The 3D model reads this
+      // trigger's range by id; the copy is scrubbed here. ===
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const pin = document.querySelector<HTMLElement>("[data-story-pin]");
+        const items = gsap.utils.toArray<HTMLElement>("[data-chapter]");
+        if (!pin || items.length === 0) return;
+        const marks = gsap.utils.toArray<HTMLElement>("[data-chapter-mark]");
+        const setActive = (i: number) => marks.forEach((m, j) => (m.dataset.active = String(i === j)));
+        setActive(0);
+        const tl = gsap.timeline({
+          defaults: { ease: "none" },
+          scrollTrigger: {
+            id: STORY_TRIGGER_ID,
+            trigger: "[data-story]",
+            start: "top top",
+            end: () => `+=${window.innerHeight * items.length}`,
+            pin,
+            scrub: 0.6,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => setActive(Math.min(items.length - 1, Math.floor(self.progress * items.length))),
+          },
+        });
+        items.forEach((item, i) => {
+          const words = item.querySelectorAll("[data-word]");
+          const body = item.querySelectorAll("[data-chapter-body]");
+          if (i > 0) {
+            tl.fromTo(item, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.05 }, i)
+              .fromTo(words, { yPercent: 110 }, { yPercent: 0, duration: 0.3, stagger: 0.03, ease: "power3.out" }, i)
+              .fromTo(body, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.25, ease: "power2.out" }, i + 0.12);
+          }
+          if (i < items.length - 1) {
+            tl.to(item, { autoAlpha: 0, y: -40, duration: 0.2, ease: "power2.in" }, i + 0.78);
+          }
+        });
+        tl.set({}, {}, items.length);
+      });
+
+      // === HORIZONTAL SCROLL (desktop only) ===
+      mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
+        const track = document.querySelector<HTMLElement>("[data-work-track]");
+        const wrap = document.querySelector<HTMLElement>("[data-work-wrap]");
+        if (!track || !wrap) return;
+        const distance = () => track.scrollWidth - window.innerWidth + 80;
+        gsap.to(track, {
+          x: () => -distance(),
+          ease: "none",
+          scrollTrigger: {
+            trigger: wrap,
+            start: "top top",
+            end: () => `+=${distance()}`,
+            scrub: 1,
+            pin: true,
+            invalidateOnRefresh: true,
+          },
+        });
+      });
+
       // === HERO — cinematic entrance timeline ===
       gsap.from("[data-hero-item]", {
         opacity: 0, y: reduceMotion ? 0 : 40, duration: 1.4,
@@ -171,27 +195,6 @@ function Index() {
         );
       });
 
-      // === HORIZONTAL SCROLL (desktop only) ===
-      const mm = gsap.matchMedia();
-      mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
-        const track = document.querySelector<HTMLElement>("[data-work-track]");
-        const wrap = document.querySelector<HTMLElement>("[data-work-wrap]");
-        if (!track || !wrap) return;
-        const distance = () => track.scrollWidth - window.innerWidth + 80;
-        gsap.to(track, {
-          x: () => -distance(),
-          ease: "none",
-          scrollTrigger: {
-            trigger: wrap,
-            start: "top top",
-            end: () => `+=${distance()}`,
-            scrub: 1,
-            pin: true,
-            invalidateOnRefresh: true,
-          },
-        });
-      });
-
       // === FOOTER — slides up ===
       gsap.fromTo("footer",
         { opacity: 0, y: reduceMotion ? 0 : 20 },
@@ -217,20 +220,25 @@ function Index() {
       context.revert();
       gsap.ticker.remove(onTick);
       lenis.destroy();
+      lenisRef.current = null;
     };
   }, []);
 
   const moveTo = (id: string) => {
     setMobileMenuOpen(false);
-    document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
+    const target = document.querySelector<HTMLElement>(id);
+    if (!target) return;
+    if (lenisRef.current) lenisRef.current.scrollTo(target, { duration: 1.6 });
+    else target.scrollIntoView({ behavior: "smooth" });
   };
   const openContactDialog = () => { setMobileMenuOpen(false); setContactDialogOpen(true); };
   const openWhatsApp = () => window.open("https://wa.me/94719802526", "_blank", "noopener,noreferrer");
 
-  const navLinks: [string, string][] = [["Services", "#services"], ["Work", "#work"], ["Process", "#process"], ["FAQ", "#faq"]];
+  const navLinks: [string, string][] = [["Process", "#process"], ["Services", "#services"], ["Work", "#work"], ["FAQ", "#faq"]];
 
   return (
     <div ref={rootRef} className="min-h-screen overflow-x-clip bg-background text-foreground selection:bg-primary/30">
+      <ScrollScene />
       <header className="fixed inset-x-0 top-0 z-50 mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 md:flex md:justify-between md:px-10 md:py-5">
         <a href="#top" aria-label="VBUILD home" className="glass-panel flex h-12 items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4">
           <span className="flex h-9 w-11 items-center justify-center overflow-hidden rounded-full bg-background">
@@ -240,7 +248,7 @@ function Index() {
         </a>
         <nav aria-label="Main navigation" className="glass-panel hidden items-center gap-1 rounded-full p-1 md:flex">
           {navLinks.map(([label, href]) => (
-            <a key={label} href={href} className="rounded-full px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">{label}</a>
+            <a key={label} href={href} onClick={(e) => { e.preventDefault(); moveTo(href); }} className="rounded-full px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">{label}</a>
           ))}
         </nav>
         <Button variant="glass" size="sm" onClick={openContactDialog} className="hidden md:inline-flex">Start a project <ArrowRight /></Button>
@@ -267,21 +275,59 @@ function Index() {
         </Sheet>
       </header>
 
-      <main>
-        {/* HERO */}
-        <section id="top" data-hero className="relative flex min-h-screen items-center overflow-hidden px-5 pt-24 md:px-10">
-          <SplineEmbed />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--background)_3%,color-mix(in_oklab,var(--background)_88%,transparent)_34%,color-mix(in_oklab,var(--background)_25%,transparent)_70%),linear-gradient(0deg,var(--background)_0%,transparent_40%)]" />
+      <main className="relative z-10">
+        {/* HERO — the 3D model lives in the fixed <ScrollScene /> layer behind */}
+        <section id="top" data-hero className="relative flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-24 md:px-10 lg:items-center lg:pb-0">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_80%,transparent)_30%,transparent_60%)] lg:block" />
           <div data-hero-copy className="relative z-10 mx-auto w-full max-w-[1440px] will-change-transform">
             <div className="max-w-3xl">
               <div data-hero-item className="mb-8 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary"><span className="h-px w-8 bg-primary" /> Independent software studio</div>
               <h1 data-hero-item className="font-display text-[clamp(4rem,10vw,9.5rem)] font-semibold leading-[0.82] tracking-[-0.07em]">VBUILD</h1>
               <p data-hero-item className="mt-8 max-w-2xl font-display text-[clamp(1.65rem,3.2vw,3.3rem)] font-medium leading-[1.08] tracking-[-0.04em]">We build websites, AI agents, and custom software that <span className="text-gradient">scale.</span></p>
-              <p data-hero-item className="mt-6 max-w-lg text-base leading-7 text-muted-foreground">Intelligent digital systems, designed beautifully and engineered for what comes next.</p>
+              <p data-hero-item className="mt-6 max-w-lg text-base leading-7 text-muted-foreground">A small team that designs, builds and looks after the software for you, from the first call to long after launch.</p>
               <div data-hero-item className="mt-9 flex flex-wrap gap-3">
                 <Button variant="hero" size="lg" onClick={openContactDialog}>Get in touch <ArrowRight /></Button>
                 <Button variant="glass" size="lg" onClick={() => moveTo("#work")}>View work</Button>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* PROCESS — pinned 3D story: the model goes signal → blueprint → built → switched on */}
+        <section id="process" data-story aria-label="Our process" className="relative">
+          <div data-story-pin className="relative overflow-hidden motion-safe:h-svh">
+            {/* Legibility scrims (static while pinned, so they never sweep across the model) */}
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_8%,color-mix(in_oklab,var(--background)_75%,transparent)_38%,transparent_62%)] motion-reduce:hidden lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_70%,transparent)_30%,transparent_58%)]" />
+
+            <div className="relative mx-auto flex h-full max-w-[1440px] flex-col px-5 pt-24 md:px-10 md:pt-28 motion-reduce:pb-16">
+              <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary"><span className="h-px w-8 bg-primary" /> How we work</p>
+
+              <div className="relative flex-1 motion-reduce:mt-10 motion-reduce:grid motion-reduce:gap-10 motion-reduce:sm:grid-cols-2">
+                {chapters.map((c) => (
+                  <article
+                    key={c.step}
+                    data-chapter
+                    className="max-w-xl motion-safe:absolute motion-safe:inset-x-0 motion-safe:bottom-24 md:motion-safe:bottom-28 lg:motion-safe:bottom-auto lg:motion-safe:top-1/2 lg:motion-safe:-translate-y-1/2"
+                  >
+                    <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">{c.step}</p>
+                    <h2 className="mt-4 font-display text-[clamp(2.25rem,5.4vw,5.25rem)] font-medium leading-[0.98] tracking-[-0.045em] md:mt-6">
+                      {c.title.split(" ").map((word, w) => (
+                        <span key={w} className="mr-[0.22em] inline-block overflow-hidden pb-[0.08em] align-bottom last:mr-0">
+                          <span data-word className="inline-block will-change-transform">{word}</span>
+                        </span>
+                      ))}
+                    </h2>
+                    <p data-chapter-body className="mt-4 max-w-md text-sm leading-6 text-muted-foreground md:mt-6 md:text-base md:leading-7">{c.detail}</p>
+                  </article>
+                ))}
+              </div>
+
+              {/* Where we are in the story — just the words, the active one lights up */}
+              <ul aria-hidden="true" className="flex flex-wrap gap-x-6 gap-y-2 pb-8 text-xs text-muted-foreground motion-reduce:hidden md:pb-10">
+                {chapters.map((c) => (
+                  <li key={c.step} data-chapter-mark className="transition-colors duration-500 data-[active=true]:text-foreground">{c.step}</li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>
@@ -312,7 +358,7 @@ function Index() {
                 <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">Services</p>
                 <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">Built end to end.</h2>
               </div>
-              <p className="max-w-sm text-sm leading-6 text-muted-foreground">One focused studio across experience, intelligence, and infrastructure. Tap a service to see how we approach it.</p>
+              <p className="max-w-sm text-sm leading-6 text-muted-foreground">Design, engineering and AI under one roof, so nothing gets lost between agencies. Pick one to see how we approach it.</p>
             </div>
             <div data-stagger className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               {services.map((s) => (
@@ -385,25 +431,6 @@ function Index() {
           </div>
         </section>
 
-        {/* PROCESS */}
-        <section id="process" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
-          <div className="mx-auto max-w-7xl">
-            <div data-reveal className="mb-10 max-w-3xl md:mb-14">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">Process</p>
-              <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">A clear path, every time.</h2>
-            </div>
-            <ol data-stagger className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-              {process.map((p, i) => (
-                <li key={p.step} className="rounded-xl border border-border bg-card/40 p-5 md:rounded-2xl md:p-7">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">0{i + 1}</p>
-                  <p className="mt-3 font-display text-xl font-medium tracking-[-0.03em] md:mt-5 md:text-2xl">{p.step}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground md:mt-3">{p.detail}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
         {/* TECH STACK MARQUEE */}
         <section className="section-rule overflow-hidden py-14 md:py-20 lg:py-28">
           <div data-reveal className="mx-auto mb-8 max-w-7xl px-5 md:mb-10 md:px-10">
@@ -443,18 +470,21 @@ function Index() {
         </section>
 
         {/* CONTACT */}
-        <section id="contact" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
-          <div data-reveal className="mx-auto grid max-w-7xl gap-8 md:gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+        {/* Full-viewport finale: the switched-on model rises with this section (see ScrollScene) */}
+        <section id="contact" className="section-rule flex min-h-lvh flex-col justify-end px-5 pb-8 pt-[46svh] md:px-10 md:pt-[48svh] lg:pt-32">
+          <div data-reveal className="mx-auto grid w-full max-w-7xl lg:grid-cols-[1.1fr_.9fr]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Have a challenge in mind?</p>
-              <h2 className="mt-5 max-w-4xl font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:mt-7 md:text-5xl lg:text-8xl">Let's build what's next.</h2>
-              <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground md:mt-6 md:text-base">Tell us where you're headed. We'll bring focus, engineering, and momentum.</p>
-              <p className="mt-3 text-sm text-muted-foreground md:mt-4">Or email <a href="mailto:hello@vbuild.dev" className="text-foreground underline-offset-4 hover:underline">hello@vbuild.dev</a></p>
+              <h2 className="mt-5 max-w-4xl font-display text-4xl font-medium leading-[0.98] tracking-[-0.04em] sm:text-5xl md:mt-7 lg:text-7xl xl:text-8xl">Let's build what's next.</h2>
+              <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground md:mt-6 md:text-base">Tell us what you're working on. We'll get back to you within a day with honest thoughts on how we'd tackle it.</p>
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 md:mt-10">
+                <Button variant="hero" size="lg" onClick={openContactDialog}>Start a project <ArrowRight /></Button>
+                <p className="text-sm text-muted-foreground">Or email <a href="mailto:hello@vbuild.dev" className="text-foreground underline-offset-4 hover:underline">hello@vbuild.dev</a></p>
+              </div>
             </div>
-            <Button variant="hero" size="lg" onClick={openContactDialog}>Start a project <ArrowRight /></Button>
           </div>
 
-          <footer className="mx-auto mt-16 grid max-w-7xl gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:grid-cols-3 md:mt-24 md:gap-6 md:pt-7">
+          <footer className="mx-auto mt-16 grid w-full max-w-7xl gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:grid-cols-3 md:mt-24 md:gap-6 md:pt-7">
             <p>&copy; 2026 VBUILD. All rights reserved.</p>
             <p className="sm:text-center">Toronto, Canada &middot; Working globally</p>
             <div className="flex items-center gap-5 sm:justify-end">

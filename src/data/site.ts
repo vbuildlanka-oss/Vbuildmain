@@ -17,7 +17,7 @@ export const services: Service[] = [
   {
     slug: "websites",
     title: "Websites",
-    copy: "High-performance digital experiences built for clarity, conversion, and lasting impact.",
+    copy: "Fast, good-looking sites that tell people what you do and make it easy to get in touch.",
     long: "Marketing sites, product sites, and content platforms engineered to load instantly, rank well, and convert. Every build is bespoke — no templates, no compromises.",
     includes: [
       "Brand-aligned visual design system",
@@ -41,7 +41,7 @@ export const services: Service[] = [
   {
     slug: "ai-solutions",
     title: "AI Solutions",
-    copy: "Purpose-built agents and intelligent systems that reason, act, and integrate with how your team already works.",
+    copy: "Agents that take the repetitive work off your team's plate and plug into the tools you already use.",
     long: "From research copilots to autonomous workflows, we design AI products end-to-end — model selection, prompt architecture, evaluation, UI.",
     includes: [
       "Agent and tool-use architecture",
@@ -65,7 +65,7 @@ export const services: Service[] = [
   {
     slug: "ai-integration",
     title: "AI Integration",
-    copy: "Production-grade intelligence woven into your products, data, and operations.",
+    copy: "Adding AI to the product you already have, carefully, with your data staying where it belongs.",
     long: "We retrofit existing products with AI features that actually move metrics — search, summarization, classification, decisioning — without breaking what works.",
     includes: [
       "Feature scoping and ROI sizing",
@@ -89,7 +89,7 @@ export const services: Service[] = [
   {
     slug: "software",
     title: "Custom Software",
-    copy: "Reliable software systems designed around your most valuable workflows.",
+    copy: "Internal tools and platforms shaped around how your business actually runs, not the other way round.",
     long: "Internal tools, customer portals, and bespoke platforms — designed with the same care as a flagship product.",
     includes: [
       "Product and technical discovery",
@@ -188,5 +188,5 @@ export const faqs = [
   { q: "Who owns the code and IP?", a: "You do — fully. Repositories, accounts, and infrastructure are transferred on completion." },
   { q: "Do you offer ongoing support?", a: "Yes. Post-launch retainers cover monitoring, iteration, and feature work at a predictable monthly rate." },
   { q: "How deep does AI integration go?", a: "From a single GPT-powered feature to multi-agent systems with custom evaluation, observability, and guardrails." },
-  { q: "Custom build vs templates?", a: "Always bespoke. Templates compromise performance, brand, and longevity — we build to last." },
+  { q: "Custom build vs templates?", a: "We build from scratch. Templates are fine for some things, but they tend to fight you once the product grows." },
 ];
