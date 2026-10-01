@@ -276,28 +276,34 @@ function Index() {
       </header>
 
       <main className="relative z-10">
-        {/* HERO — the 3D model lives in the fixed <ScrollScene /> layer behind */}
-        <section id="top" data-hero className="relative flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-24 md:px-10 lg:items-center lg:pb-0">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_80%,transparent)_30%,transparent_60%)] lg:block" />
+        {/* HERO — the robot, the giant wordmark and the stage all live in the fixed <ScrollScene /> */}
+        <section id="top" data-hero className="relative flex min-h-svh items-end overflow-hidden px-5 pb-12 pt-28 md:px-10 md:pb-16 lg:items-center lg:pb-0">
+          {/* Phones/tablets: the robot is a full-height backdrop, so the copy sits on a soft floor of shadow */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_6%,color-mix(in_oklab,var(--background)_82%,transparent)_34%,transparent_62%),linear-gradient(180deg,color-mix(in_oklab,var(--background)_70%,transparent)_0%,transparent_16%)] lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_78%,transparent)_28%,transparent_55%)]" />
           <div data-hero-copy className="relative z-10 mx-auto w-full max-w-[1440px] will-change-transform">
-            <div className="max-w-3xl">
-              <div data-hero-item className="mb-8 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary"><span className="h-px w-8 bg-primary" /> Independent software studio</div>
-              <h1 data-hero-item className="font-display text-[clamp(4rem,10vw,9.5rem)] font-semibold leading-[0.82] tracking-[-0.07em]">VBUILD</h1>
-              <p data-hero-item className="mt-8 max-w-2xl font-display text-[clamp(1.65rem,3.2vw,3.3rem)] font-medium leading-[1.08] tracking-[-0.04em]">We build websites, AI agents, and custom software that <span className="text-gradient">scale.</span></p>
-              <p data-hero-item className="mt-6 max-w-lg text-base leading-7 text-muted-foreground">A small team that designs, builds and looks after the software for you, from the first call to long after launch.</p>
-              <div data-hero-item className="mt-9 flex flex-wrap gap-3">
+            <div className="max-w-2xl">
+              <p data-hero-item className="mb-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary md:mb-8"><span className="h-px w-8 bg-primary" /> <span className="hidden sm:inline">VBUILD ·</span> Independent software studio</p>
+              <h1 data-hero-item className="font-display text-[clamp(2.6rem,6.4vw,6rem)] font-medium leading-[0.95] tracking-[-0.055em]">
+                <span className="sr-only">VBUILD: </span>We build websites, AI agents and software that <span className="text-gradient">scale.</span>
+              </h1>
+              <p data-hero-item className="mt-6 max-w-md text-[15px] leading-7 text-muted-foreground md:mt-8 md:text-base">A small team that designs, builds and looks after the software for you, from the first call to long after launch.</p>
+              <div data-hero-item className="mt-8 flex flex-wrap gap-3 md:mt-10">
                 <Button variant="hero" size="lg" onClick={openContactDialog}>Get in touch <ArrowRight /></Button>
                 <Button variant="glass" size="lg" onClick={() => moveTo("#work")}>View work</Button>
               </div>
             </div>
           </div>
+          <button type="button" onClick={() => moveTo("#process")} data-hero-item className="group absolute bottom-6 right-5 z-10 hidden items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-muted-foreground transition-colors hover:text-foreground md:right-10 md:flex">
+            Scroll to meet NEXBOT
+            <span className="relative block h-10 w-px overflow-hidden bg-border"><span className="scroll-cue absolute inset-x-0 top-0 h-1/2 bg-primary" /></span>
+          </button>
         </section>
 
         {/* PROCESS — pinned 3D story: the model goes signal → blueprint → built → switched on */}
         <section id="process" data-story aria-label="Our process" className="relative">
           <div data-story-pin className="relative overflow-hidden motion-safe:h-svh">
             {/* Legibility scrims (static while pinned, so they never sweep across the model) */}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_8%,color-mix(in_oklab,var(--background)_75%,transparent)_38%,transparent_62%)] motion-reduce:hidden lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_70%,transparent)_30%,transparent_58%)]" />
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_10%,color-mix(in_oklab,var(--background)_80%,transparent)_40%,transparent_66%),linear-gradient(180deg,color-mix(in_oklab,var(--background)_70%,transparent)_0%,transparent_18%)] motion-reduce:hidden lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_72%,transparent)_30%,transparent_56%)]" />
 
             <div className="relative mx-auto flex h-full max-w-[1440px] flex-col px-5 pt-24 md:px-10 md:pt-28 motion-reduce:pb-16">
               <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary"><span className="h-px w-8 bg-primary" /> How we work</p>
@@ -471,8 +477,9 @@ function Index() {
 
         {/* CONTACT */}
         {/* Full-viewport finale: the switched-on model rises with this section (see ScrollScene) */}
-        <section id="contact" className="section-rule flex min-h-lvh flex-col justify-end px-5 pb-8 pt-[46svh] md:px-10 md:pt-[48svh] lg:pt-32">
-          <div data-reveal className="mx-auto grid w-full max-w-7xl lg:grid-cols-[1.1fr_.9fr]">
+        <section id="contact" className="section-rule relative flex min-h-lvh flex-col justify-end px-5 pb-8 pt-[46svh] md:px-10 md:pt-[48svh] lg:pt-32">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_18%,color-mix(in_oklab,var(--background)_78%,transparent)_48%,transparent_70%)] lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_70%,transparent)_32%,transparent_58%)]" />
+          <div data-reveal className="relative mx-auto grid w-full max-w-7xl lg:grid-cols-[1.1fr_.9fr]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Have a challenge in mind?</p>
               <h2 className="mt-5 max-w-4xl font-display text-4xl font-medium leading-[0.98] tracking-[-0.04em] sm:text-5xl md:mt-7 lg:text-7xl xl:text-8xl">Let's build what's next.</h2>
@@ -484,7 +491,7 @@ function Index() {
             </div>
           </div>
 
-          <footer className="mx-auto mt-16 grid w-full max-w-7xl gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:grid-cols-3 md:mt-24 md:gap-6 md:pt-7">
+          <footer className="relative mx-auto mt-16 grid w-full max-w-7xl gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:grid-cols-3 md:mt-24 md:gap-6 md:pt-7">
             <p>&copy; 2026 VBUILD. All rights reserved.</p>
             <p className="sm:text-center">Toronto, Canada &middot; Working globally</p>
             <div className="flex items-center gap-5 sm:justify-end">

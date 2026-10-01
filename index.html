@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#040609" />
     <title>VBUILD — AI & Software Studio</title>
     <meta name="description" content="VBUILD creates premium websites, AI agents, integrations, and custom software engineered to scale." />
     <meta name="author" content="VBUILD" />
@@ -23,7 +24,7 @@
         z-index: 9999;
         display: grid;
         place-items: center;
-        background: oklch(0.09 0.024 275);
+        background: oklch(0.12 0.01 265);
         transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0.6s;
       }
       #loader.hidden {
@@ -44,7 +45,7 @@
         height: 72px;
         border-radius: 50%;
         overflow: hidden;
-        box-shadow: 0 0 40px -8px oklch(0.77 0.15 210 / 40%);
+        box-shadow: 0 0 40px -8px oklch(0.87 0.12 205 / 40%);
         animation: loader-pulse 2s ease-in-out infinite;
       }
       .loader-logo img {
@@ -58,7 +59,7 @@
         inset: -4px;
         border-radius: 50%;
         border: 2px solid transparent;
-        border-top-color: oklch(0.77 0.15 210);
+        border-top-color: oklch(0.87 0.12 205);
         animation: loader-spin 1.2s linear infinite;
       }
       /* Brand text */
@@ -85,13 +86,13 @@
         height: 100%;
         width: 0%;
         border-radius: 2px;
-        background: linear-gradient(90deg, oklch(0.77 0.15 210), oklch(0.73 0.2 315));
+        background: linear-gradient(90deg, oklch(0.87 0.12 205), oklch(0.64 0.23 295));
         animation: loader-progress 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s forwards;
       }
 
       @keyframes loader-pulse {
-        0%, 100% { box-shadow: 0 0 40px -8px oklch(0.77 0.15 210 / 40%); transform: scale(1); }
-        50% { box-shadow: 0 0 60px -4px oklch(0.77 0.15 210 / 60%); transform: scale(1.04); }
+        0%, 100% { box-shadow: 0 0 40px -8px oklch(0.87 0.12 205 / 40%); transform: scale(1); }
+        50% { box-shadow: 0 0 60px -4px oklch(0.87 0.12 205 / 60%); transform: scale(1.04); }
       }
       @keyframes loader-spin {
         to { transform: rotate(360deg); }
