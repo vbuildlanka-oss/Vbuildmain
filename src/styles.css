@@ -64,31 +64,31 @@
 }
 
 :root {
+  /* Studio black + ice + ultraviolet. --background must match BG_HEX in scroll-scene/engine.ts (#040609). */
   --radius: 1rem;
-  --background: oklch(0.09 0.024 275);
-  --foreground: oklch(0.97 0.008 250);
-  --card: oklch(0.16 0.025 274 / 58%);
-  --card-foreground: oklch(0.97 0.008 250);
-  --popover: oklch(0.14 0.03 274);
-  --popover-foreground: oklch(0.97 0.008 250);
-  --primary: oklch(0.77 0.15 210);
-  --primary-foreground: oklch(0.1 0.03 266);
-  --secondary: oklch(0.2 0.045 285);
-  --secondary-foreground: oklch(0.96 0.01 250);
-  --muted: oklch(0.17 0.025 274);
-  --muted-foreground: oklch(0.69 0.025 255);
-  --accent: oklch(0.21 0.05 275 / 70%);
-  --accent-foreground: oklch(0.98 0.005 250);
+  --background: oklch(0.12 0.01 265);
+  --foreground: oklch(0.96 0.006 260);
+  --card: oklch(0.17 0.012 265 / 55%);
+  --card-foreground: oklch(0.96 0.006 260);
+  --popover: oklch(0.15 0.012 265);
+  --popover-foreground: oklch(0.96 0.006 260);
+  --primary: oklch(0.87 0.12 205);
+  --primary-foreground: oklch(0.14 0.02 250);
+  --secondary: oklch(0.2 0.02 265);
+  --secondary-foreground: oklch(0.96 0.006 260);
+  --muted: oklch(0.18 0.012 265);
+  --muted-foreground: oklch(0.7 0.015 260);
+  --accent: oklch(0.22 0.02 265 / 70%);
+  --accent-foreground: oklch(0.98 0.004 260);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.92 0.02 260 / 13%);
-  --input: oklch(0.92 0.02 260 / 16%);
-  --ring: oklch(0.77 0.15 210);
-  --surface-bright: oklch(0.2 0.06 277 / 72%);
-  --glow-cyan: oklch(0.72 0.17 215 / 25%);
-  --glow-magenta: oklch(0.61 0.22 325 / 18%);
-  --shadow-glow: 0 12px 45px -18px color-mix(in oklab, var(--primary) 55%, transparent);
-  --shadow-glow-strong: 0 18px 60px -16px color-mix(in oklab, var(--primary) 75%, transparent);
+  --border: oklch(0.95 0.01 260 / 10%);
+  --input: oklch(0.95 0.01 260 / 14%);
+  --ring: oklch(0.87 0.12 205);
+  --violet: oklch(0.64 0.23 295);
+  --surface-bright: oklch(0.22 0.02 265 / 72%);
+  --shadow-glow: 0 10px 40px -14px color-mix(in oklab, var(--primary) 60%, transparent);
+  --shadow-glow-strong: 0 16px 60px -12px color-mix(in oklab, var(--primary) 80%, transparent);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -149,7 +149,21 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     overflow-x: hidden;
-    background-image: radial-gradient(circle at 80% 10%, var(--glow-magenta), transparent 28%), radial-gradient(circle at 15% 42%, var(--glow-cyan), transparent 24%);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Film grain over the whole site, 3D included, so everything sits in the same "shot". */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    z-index: 45;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 1.2s steps(6) infinite;
   }
 
   ::selection { background: color-mix(in oklab, var(--primary) 40%, transparent); }
@@ -157,20 +171,23 @@
 }
 
 @utility glass-panel {
-  background: var(--card);
+  background: color-mix(in oklab, var(--background) 55%, transparent);
   border: 1px solid var(--border);
-  backdrop-filter: blur(18px) saturate(130%);
-  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, transparent);
+  backdrop-filter: blur(20px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--foreground) 9%, transparent),
+    0 20px 50px -30px oklch(0 0 0 / 80%);
 }
 
 @utility text-gradient {
-  background: linear-gradient(115deg, var(--foreground) 15%, var(--primary) 55%, oklch(0.73 0.2 315) 95%);
+  background: linear-gradient(100deg, var(--foreground) 5%, var(--primary) 45%, var(--violet) 100%);
   background-clip: text;
   color: transparent;
 }
 
 @utility section-rule {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, var(--border) 18%, color-mix(in oklab, var(--primary) 22%, transparent) 50%, var(--border) 82%, transparent) 1;
 }
 
 .service-visual {
@@ -233,4 +250,21 @@
 .vbuild-marquee { animation: vbuild-marquee-scroll 38s linear infinite; }
 @media (prefers-reduced-motion: reduce) {
   .vbuild-marquee { animation: none; }
+}
+
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Hero "scroll" cue */
+@keyframes scroll-cue { 0% { transform: translateY(-100%); } 100% { transform: translateY(200%); } }
+.scroll-cue { animation: scroll-cue 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none; }
 }

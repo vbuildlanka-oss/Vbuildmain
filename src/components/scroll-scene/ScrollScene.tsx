@@ -3,7 +3,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import modelUrl from "@/assets/models/nexbot.glb?url";
 import { buildKeyframes, layoutFor, type Anchors } from "./timeline";
-import type { NexbotEngine } from "./engine";
+import type { NexbotEngine, Quality } from "./engine";
 
 /** Pinned story ScrollTrigger id — must match the one created on the page. */
 export const STORY_TRIGGER_ID = "story";
@@ -76,10 +76,10 @@ export function ScrollScene() {
     if (nav.connection?.saveData || !supportsWebGL2()) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const lowPower =
-      window.matchMedia("(pointer: coarse)").matches ||
-      window.innerWidth < 768 ||
-      (navigator.hardwareConcurrency ?? 8) <= 4;
+    // 2 = bloom + floor reflections, 1 = bloom, 0 = direct. The engine steps down by itself if needed.
+    const cores = navigator.hardwareConcurrency ?? 8;
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const quality: Quality = cores <= 4 ? 0 : coarse || window.innerWidth < 1024 ? 1 : 2;
 
     let engine: NexbotEngine | undefined;
     let disposed = false;
@@ -103,7 +103,7 @@ export function ScrollScene() {
         if (disposed) return;
         engine = new NexbotEngine(container, {
           reducedMotion,
-          lowPower,
+          quality,
           onContextLost: () => {
             engine?.dispose();
             setFailed(true);
@@ -137,7 +137,10 @@ export function ScrollScene() {
     <div
       ref={containerRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-0 h-lvh"
-    />
+      className="pointer-events-none fixed inset-x-0 top-0 z-0 h-lvh opacity-0"
+    >
+      {/* Lens vignette: fades into the page background so the frame has no hard edge */}
+      <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_45%,transparent_55%,var(--background)_100%)]" />
+    </div>
   );
 }
