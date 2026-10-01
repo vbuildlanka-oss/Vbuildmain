@@ -153,17 +153,17 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Film grain over the whole site, 3D included, so everything sits in the same "shot". */
+  /* Film grain over the whole site, 3D included. Static and unblended so it costs
+     nothing per frame (a blended/animated full-screen layer re-composites the page). */
   body::after {
     content: "";
     position: fixed;
-    inset: -50%;
+    inset: 0;
     z-index: 45;
     pointer-events: none;
-    opacity: 0.07;
-    mix-blend-mode: overlay;
+    opacity: 0.045;
+    contain: strict;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    animation: grain 1.2s steps(6) infinite;
   }
 
   ::selection { background: color-mix(in oklab, var(--primary) 40%, transparent); }
@@ -173,7 +173,7 @@
 @utility glass-panel {
   background: color-mix(in oklab, var(--background) 55%, transparent);
   border: 1px solid var(--border);
-  backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(10px);
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, var(--foreground) 9%, transparent),
     0 20px 50px -30px oklch(0 0 0 / 80%);
@@ -252,19 +252,8 @@
   .vbuild-marquee { animation: none; }
 }
 
-@keyframes grain {
-  0% { transform: translate(0, 0); }
-  20% { transform: translate(-3%, 2%); }
-  40% { transform: translate(2%, -3%); }
-  60% { transform: translate(-2%, -1%); }
-  80% { transform: translate(3%, 3%); }
-  100% { transform: translate(0, 0); }
-}
 
 /* Hero "scroll" cue */
 @keyframes scroll-cue { 0% { transform: translateY(-100%); } 100% { transform: translateY(200%); } }
 .scroll-cue { animation: scroll-cue 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
 
-@media (prefers-reduced-motion: reduce) {
-  body::after { animation: none; }
-}
