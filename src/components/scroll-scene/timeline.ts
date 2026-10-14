@@ -1,60 +1,37 @@
 /**
- * Scroll timeline for NEXBOT.
+ * Scroll timeline for the particle scene: dust sphere → brain.
  *
- * The scene is a single continuous camera move. Every keyframe sits at an
- * absolute scroll offset (px); each frame the engine samples the timeline at
- * the current scroll position and damps towards it, so motion is
- * deterministic (jumping to any anchor gives the same shot) and never fights
- * GSAP tweens.
+ * Every keyframe sits at an absolute scroll offset in pixels. Each frame the
+ * engine samples the timeline at the current scroll position and damps
+ * towards the result. Motion is therefore deterministic (jumping to any
+ * anchor gives the same shot) and never fights GSAP tweens.
  *
- * Camera model: the robot stands at the origin (feet at y ≈ -1.1, visor at
- * y ≈ 0.93). The camera orbits a point on its centre line and uses a lens
- * shift to push the subject left/right without rotating the view, so text can
- * share the frame.
+ * Camera model: the particles sit at the origin (sphere radius 1, brain
+ * about 2 long). The camera orbits the origin. A lens shift moves the
+ * subject left or right without rotating the view, so text can share the
+ * frame.
  */
 
 export interface SceneState {
-  /** Camera orbit around the robot (radians, 0 = straight on). */
+  /** Camera orbit around the subject (radians, 0 = side view of the brain). */
   orbit: number;
-  /** Camera elevation (radians, + = above the aim point looking down). */
+  /** Camera elevation (radians, + = above, looking down). */
   pitch: number;
-  /** Camera distance to the aim point (scene units; the robot is 2.2 tall). */
+  /** Camera distance to the origin. */
   dist: number;
-  /** Height of the aim point on the robot's centre line. */
-  lookY: number;
-  /** Lens shift: where the aim point lands on screen (-1…1 of the half-frame). */
+  /** Lens shift: where the origin lands on screen (-1…1 of the half-frame). */
   shiftX: number;
   shiftY: number;
-  /** 0 = every part detached (hologram), 1 = fully assembled. Builds feet → head. */
-  assemble: number;
-  /** Detached parts burst outwards into a cloud the camera flies through. */
-  explode: number;
-  /** Detached parts line up as an ordered exploded-view blueprint. */
-  blueprint: number;
-  /** Holographic shell on detached parts. */
-  holo: number;
-  /** Contour lines on detached parts. */
-  edges: number;
-  /** Surface particle opacity. */
-  points: number;
-  /** 0 = particles hug the surface, 1 = dispersed data cloud. */
-  disperse: number;
-  /** Visor eyes + joint energy ("switched on"). */
-  power: number;
-  /** Raised-arm wave gesture. */
-  wave: number;
-  /** How strongly the head tracks the cursor. */
-  look: number;
-  /** Holographic floor ring under the feet. */
-  ring: number;
-  /** Blueprint grid on the floor. */
-  grid: number;
-  /** Giant wordmark standing behind the robot. */
-  title: number;
-  /** Backlight halo + light shafts behind the robot. */
-  halo: number;
-  /** Bloom intensity multiplier. */
-  glow: number;
+  /** 0 = sphere, 1 = brain. Particles leave the sphere staggered and flow into place. */
+  morph: number;
+  /** 0 = on the shape, 1 = burst into a slowly turning cloud. */
+  scatter: number;
+  /** Neural activity: waves of light and sparks across the brain. */
+  pulse: number;
+  /** 0 = white dust, 1 = ice → violet brand gradient. */
+  tint: number;
+  /** Particle size multiplier. */
+  size: number;
   /** Whole-canvas opacity. */
   opacity: number;
 }
@@ -63,24 +40,13 @@ export const STATE_KEYS = [
   "orbit",
   "pitch",
   "dist",
-  "lookY",
   "shiftX",
   "shiftY",
-  "assemble",
-  "explode",
-  "blueprint",
-  "holo",
-  "edges",
-  "points",
-  "disperse",
-  "power",
-  "wave",
-  "look",
-  "ring",
-  "grid",
-  "title",
-  "halo",
-  "glow",
+  "morph",
+  "scatter",
+  "pulse",
+  "tint",
+  "size",
   "opacity",
 ] as const satisfies readonly (keyof SceneState)[];
 
@@ -112,25 +78,14 @@ const easeOut: Ease = (t) => 1 - Math.pow(1 - t, 3);
 export const BASE_STATE: SceneState = {
   orbit: 0,
   pitch: 0,
-  dist: 5.6,
-  lookY: 0,
+  dist: 5.4,
   shiftX: 0,
   shiftY: 0,
-  assemble: 1,
-  explode: 0,
-  blueprint: 0,
-  holo: 0,
-  edges: 0,
-  points: 0,
-  disperse: 0,
-  power: 0,
-  wave: 0,
-  look: 0,
-  ring: 0,
-  grid: 0,
-  title: 0,
-  halo: 0.6,
-  glow: 1,
+  morph: 0,
+  scatter: 0,
+  pulse: 0,
+  tint: 0,
+  size: 1,
   opacity: 1,
 };
 
@@ -141,44 +96,40 @@ export function layoutFor(width: number): Layout {
 }
 
 type Frame = Pick<SceneState, "dist" | "shiftX" | "shiftY">;
+type Shot = "hero" | "close" | "cloud" | "forming" | "brain" | "alive" | "contact";
 
 /**
- * Framing per layout. On desktop the robot sits right of the copy; on phones
- * and tablets it becomes a full-height backdrop behind the text.
+ * Framing per layout. On desktop the subject sits to the right of the copy.
+ * On phones and tablets it becomes a backdrop behind the text, raised above
+ * centre and pulled back far enough to fit the narrow frame.
  */
-const FRAMING: Record<
-  Layout,
-  Record<"hero" | "visor" | "cloud" | "plan" | "legs" | "torso" | "launch" | "contact", Frame>
-> = {
+const FRAMING: Record<Layout, Record<Shot, Frame>> = {
   desktop: {
-    hero: { dist: 5.7, shiftX: 0.44, shiftY: 0 },
-    visor: { dist: 1.05, shiftX: 0.3, shiftY: 0 },
-    cloud: { dist: 4.4, shiftX: 0.36, shiftY: 0 },
-    plan: { dist: 6.6, shiftX: 0.4, shiftY: 0.02 },
-    legs: { dist: 2.9, shiftX: 0.38, shiftY: 0 },
-    torso: { dist: 3.7, shiftX: 0.4, shiftY: 0 },
-    launch: { dist: 5.1, shiftX: 0.42, shiftY: 0 },
-    contact: { dist: 5.4, shiftX: 0.46, shiftY: 0 },
+    hero: { dist: 6.0, shiftX: 0.44, shiftY: 0 },
+    close: { dist: 3.4, shiftX: 0.34, shiftY: 0 },
+    cloud: { dist: 5.0, shiftX: 0.38, shiftY: 0 },
+    forming: { dist: 5.4, shiftX: 0.4, shiftY: 0.02 },
+    brain: { dist: 5.6, shiftX: 0.42, shiftY: 0 },
+    alive: { dist: 5.2, shiftX: 0.42, shiftY: 0 },
+    contact: { dist: 5.8, shiftX: 0.46, shiftY: 0 },
   },
   tablet: {
-    hero: { dist: 5.9, shiftX: 0, shiftY: 0.2 },
-    visor: { dist: 1.25, shiftX: 0, shiftY: 0.3 },
-    cloud: { dist: 5.0, shiftX: 0, shiftY: 0.22 },
-    plan: { dist: 7.0, shiftX: 0, shiftY: 0.24 },
-    legs: { dist: 3.3, shiftX: 0, shiftY: 0.24 },
-    torso: { dist: 4.6, shiftX: 0, shiftY: 0.24 },
-    launch: { dist: 6.0, shiftX: 0, shiftY: 0.22 },
-    contact: { dist: 6.6, shiftX: 0, shiftY: 0.34 },
+    hero: { dist: 7.0, shiftX: 0, shiftY: 0.22 },
+    close: { dist: 4.6, shiftX: 0, shiftY: 0.26 },
+    cloud: { dist: 6.6, shiftX: 0, shiftY: 0.24 },
+    forming: { dist: 7.2, shiftX: 0, shiftY: 0.26 },
+    brain: { dist: 7.0, shiftX: 0, shiftY: 0.26 },
+    alive: { dist: 6.6, shiftX: 0, shiftY: 0.26 },
+    contact: { dist: 7.4, shiftX: 0, shiftY: 0.34 },
   },
   mobile: {
-    hero: { dist: 6.1, shiftX: 0, shiftY: 0.2 },
-    visor: { dist: 1.35, shiftX: 0, shiftY: 0.32 },
-    cloud: { dist: 5.2, shiftX: 0, shiftY: 0.24 },
-    plan: { dist: 7.4, shiftX: 0, shiftY: 0.28 },
-    legs: { dist: 3.4, shiftX: 0, shiftY: 0.26 },
-    torso: { dist: 4.9, shiftX: 0, shiftY: 0.26 },
-    launch: { dist: 6.3, shiftX: 0, shiftY: 0.24 },
-    contact: { dist: 7.6, shiftX: 0, shiftY: 0.3 },
+    hero: { dist: 10.6, shiftX: 0, shiftY: 0.26 },
+    close: { dist: 7.2, shiftX: 0, shiftY: 0.3 },
+    cloud: { dist: 9.6, shiftX: 0, shiftY: 0.28 },
+    forming: { dist: 11.0, shiftX: 0, shiftY: 0.3 },
+    brain: { dist: 11.6, shiftX: 0, shiftY: 0.32 },
+    alive: { dist: 11.0, shiftX: 0, shiftY: 0.32 },
+    contact: { dist: 12.0, shiftX: 0, shiftY: 0.36 },
   },
 };
 
@@ -192,149 +143,94 @@ export function buildKeyframes(a: Anchors, layout: Layout, reducedMotion: boolea
   const F = FRAMING[layout];
   const compact = layout !== "desktop";
 
+  // Hero: the dust sphere, as in the Spline scene.
   const hero: SceneState = {
     ...BASE_STATE,
     ...F.hero,
-    orbit: compact ? -0.22 : -0.42,
-    pitch: -0.05,
-    lookY: 0.05,
-    power: 0.55,
-    look: 1,
-    ring: 0.7,
-    title: 1,
-    halo: 0.9,
-    points: 0.22,
-    disperse: 0.05,
+    orbit: -0.35,
+    pitch: 0.12,
+    tint: 0.12,
   };
 
   if (reducedMotion) {
-    // One finished, still shot in the hero that simply fades away.
-    const still: SceneState = { ...hero, look: 0, power: 0.8 };
+    // No scroll animation: one still shot of the finished brain that fades with the hero.
+    const still: SceneState = {
+      ...hero,
+      ...F.brain,
+      orbit: 0.5,
+      pitch: 0.2,
+      morph: 1,
+      tint: 0.8,
+      pulse: 0.4,
+    };
     return [
       { at: 0, state: still },
       { at: Math.max(1, a.heroEnd * 0.8), state: { ...still, opacity: 0 }, ease: linear },
     ];
   }
 
-  // Scrolling out of the hero pushes the camera right up to the visor.
-  const visor: SceneState = {
-    ...hero,
-    ...F.visor,
-    orbit: -0.1,
-    pitch: 0.02,
-    lookY: 0.93,
-    power: 0.75,
-    look: 0.25,
-    title: 0,
-    ring: 0.3,
-    halo: 0.55,
-    points: 0.12,
-  };
+  // Leaving the hero, the camera pushes in until the shell fills the frame.
+  const close: SceneState = { ...hero, ...F.close, orbit: -0.1, pitch: 0.05, tint: 0.2 };
 
-  // Listen — the robot bursts apart around the camera, which pulls back through the cloud.
+  // Listen ("every project starts in pieces"): the sphere bursts into a cloud of signal.
   const cloud: SceneState = {
-    ...visor,
+    ...close,
     ...F.cloud,
-    orbit: 0.55,
-    pitch: 0.12,
-    lookY: 0.2,
-    assemble: 0,
-    explode: 1,
-    holo: 0.95,
-    edges: 0.3,
-    points: 1,
-    disperse: 0.85,
-    power: 0,
-    look: 0,
-    ring: 0.12,
-    halo: 0.4,
-    glow: 1.25,
+    orbit: 0.45,
+    pitch: 0.18,
+    scatter: 1,
+    tint: 0.4,
+    size: 0.9,
   };
 
-  // Plan — high three-quarter view over an ordered exploded blueprint.
-  const plan: SceneState = {
+  // Plan ("lay it all out"): the cloud settles and the brain begins to take shape, seen from above.
+  const forming: SceneState = {
     ...cloud,
-    ...F.plan,
-    orbit: -0.95,
-    pitch: 0.42,
-    lookY: 0.3,
-    explode: 0,
-    blueprint: 1,
-    holo: 1,
-    edges: 1,
-    points: 0.3,
-    disperse: 0.03,
-    ring: 0.45,
-    grid: 1,
-    halo: 0.5,
+    ...F.forming,
+    orbit: 0.95,
+    pitch: 0.62,
+    scatter: 0.18,
+    morph: 0.55,
+    tint: 0.55,
+    size: 0.95,
   };
 
-  // Build — a low crane shot that rises with the assembly line, feet → head.
-  const legs: SceneState = {
-    ...plan,
-    ...F.legs,
-    orbit: -0.4,
-    pitch: -0.1,
-    lookY: -0.45,
-    assemble: 0.42,
-    blueprint: 0.55,
-    holo: 0.85,
-    edges: 0.85,
-    grid: 0.7,
-    ring: 0.7,
-  };
-  const torso: SceneState = {
-    ...legs,
-    ...F.torso,
-    orbit: -0.18,
-    pitch: 0,
-    lookY: 0.5,
-    assemble: 1,
-    blueprint: 0,
-    holo: 0.6,
-    edges: 0.6,
-    grid: 0.25,
-    points: 0.2,
+  // Build ("put it together, properly"): fully formed, swinging to a three-quarter view.
+  const brain: SceneState = {
+    ...forming,
+    ...F.brain,
+    orbit: 0.3,
+    pitch: 0.16,
+    scatter: 0,
+    morph: 1,
+    tint: 0.75,
+    size: 1,
   };
 
-  // Launch — pull back to a low hero angle as it switches on.
-  const launch: SceneState = {
-    ...torso,
-    ...F.launch,
-    orbit: 0.14,
-    pitch: -0.15,
-    lookY: 0.12,
-    holo: 0,
-    edges: 0,
-    grid: 0,
-    power: 1,
-    look: 0.75,
-    points: 0.7,
-    disperse: 0.28,
-    ring: 1,
-    halo: 1.25,
-    glow: 1.55,
+  // Launch ("comes to life"): it lights up with activity.
+  const alive: SceneState = {
+    ...brain,
+    ...F.alive,
+    orbit: -0.22,
+    pitch: 0.1,
+    pulse: 1,
+    tint: 1,
+    size: 1.1,
   };
 
   const chapters: Beat[][] = [
     [{ at: 0.62, state: cloud }],
-    [{ at: 0.6, state: plan }],
-    [
-      { at: 0.45, state: legs },
-      { at: 0.92, state: torso },
-    ],
-    [{ at: 0.55, state: launch, ease: easeOut }],
+    [{ at: 0.7, state: forming }],
+    [{ at: 0.75, state: brain }],
+    [{ at: 0.55, state: alive, ease: easeOut }],
   ];
 
-  // After the story the camera cranes up over the head and the scene fades.
+  // After the story the camera cranes up and back while the scene fades.
   const exit: SceneState = {
-    ...launch,
+    ...alive,
     pitch: 0.55,
-    lookY: 1.4,
-    dist: launch.dist + 1.6,
+    dist: alive.dist + 1.6,
     opacity: 0,
-    ring: 0,
-    halo: 0.6,
   };
 
   const kfs: Keyframe[] = [{ at: 0, state: hero }];
@@ -343,7 +239,7 @@ export function buildKeyframes(a: Anchors, layout: Layout, reducedMotion: boolea
     const { start, end } = a.story;
     const n = Math.min(a.story.chapters, chapters.length);
     const len = (end - start) / n;
-    kfs.push({ at: start, state: visor });
+    kfs.push({ at: start, state: close });
     for (let i = 0; i < n; i++) {
       const s = start + i * len;
       const beats = chapters[i];
@@ -357,26 +253,18 @@ export function buildKeyframes(a: Anchors, layout: Layout, reducedMotion: boolea
 
   if (a.contact) {
     const contact: SceneState = {
-      ...launch,
+      ...alive,
       ...F.contact,
-      orbit: compact ? -0.12 : -0.38,
-      pitch: -0.05,
-      lookY: 0.2,
-      wave: 1,
-      look: 1,
-      points: 0.55,
-      disperse: 0.2,
-      ring: 0.9,
-      halo: 1,
-      glow: 1.2,
+      orbit: compact ? 0.2 : 0.35,
+      pitch: 0.16,
+      pulse: 0.85,
       opacity: 1,
     };
     // Sweep in from the side as the section arrives.
     const contactIn: SceneState = {
       ...contact,
-      orbit: contact.orbit - 1.5,
+      orbit: contact.orbit - 1.4,
       dist: contact.dist + 3,
-      wave: 0,
       opacity: 0,
     };
     const last = kfs[kfs.length - 1];

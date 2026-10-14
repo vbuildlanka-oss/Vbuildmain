@@ -19,8 +19,8 @@ export const Route = createFileRoute("/")({
 });
 
 /**
- * The process story. Each chapter drives a pose of NEXBOT in <ScrollScene />
- * (see components/scroll-scene/timeline.ts): scattered → blueprint → assembled → switched on.
+ * The process story. Each chapter drives a beat of the particle scene in <ScrollScene />
+ * (see components/scroll-scene/timeline.ts): sphere bursts → brain takes shape → formed → comes alive.
  */
 const chapters = [
   {
@@ -276,9 +276,9 @@ function Index() {
       </header>
 
       <main className="relative z-10">
-        {/* HERO — the robot, the giant wordmark and the stage all live in the fixed <ScrollScene /> */}
+        {/* HERO — the particle sphere lives in the fixed <ScrollScene /> */}
         <section id="top" data-hero className="relative flex min-h-svh items-end overflow-hidden px-5 pb-12 pt-28 md:px-10 md:pb-16 lg:items-center lg:pb-0">
-          {/* Phones/tablets: the robot is a full-height backdrop, so the copy sits on a soft floor of shadow */}
+          {/* Phones/tablets: the particles are a full-height backdrop, so the copy sits on a soft floor of shadow */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_6%,color-mix(in_oklab,var(--background)_82%,transparent)_34%,transparent_62%),linear-gradient(180deg,color-mix(in_oklab,var(--background)_70%,transparent)_0%,transparent_16%)] lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_78%,transparent)_28%,transparent_55%)]" />
           <div data-hero-copy className="relative z-10 mx-auto w-full max-w-[1440px] will-change-transform">
             <div className="max-w-2xl">
@@ -294,12 +294,12 @@ function Index() {
             </div>
           </div>
           <button type="button" onClick={() => moveTo("#process")} data-hero-item className="group absolute bottom-6 right-5 z-10 hidden items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-muted-foreground transition-colors hover:text-foreground md:right-10 md:flex">
-            Scroll to meet NEXBOT
+            Scroll to explore
             <span className="relative block h-10 w-px overflow-hidden bg-border"><span className="scroll-cue absolute inset-x-0 top-0 h-1/2 bg-primary" /></span>
           </button>
         </section>
 
-        {/* PROCESS — pinned 3D story: the model goes signal → blueprint → built → switched on */}
+        {/* PROCESS — pinned 3D story: the particle sphere morphs into a brain and comes alive */}
         <section id="process" data-story aria-label="Our process" className="relative">
           <div data-story-pin className="relative overflow-hidden motion-safe:h-svh">
             {/* Legibility scrims (static while pinned, so they never sweep across the model) */}
@@ -476,7 +476,7 @@ function Index() {
         </section>
 
         {/* CONTACT */}
-        {/* Full-viewport finale: the switched-on model rises with this section (see ScrollScene) */}
+        {/* Full-viewport finale: the brain sweeps back in with this section (see ScrollScene) */}
         <section id="contact" className="section-rule relative flex min-h-lvh flex-col justify-end px-5 pb-8 pt-[46svh] md:px-10 md:pt-[48svh] lg:pt-32">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_18%,color-mix(in_oklab,var(--background)_78%,transparent)_48%,transparent_70%)] lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_70%,transparent)_32%,transparent_58%)]" />
           <div data-reveal className="relative mx-auto grid w-full max-w-7xl lg:grid-cols-[1.1fr_.9fr]">

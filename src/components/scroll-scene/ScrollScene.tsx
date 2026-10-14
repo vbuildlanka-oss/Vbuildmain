@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import modelUrl from "@/assets/models/nexbot.glb?url";
+import { loadParticles } from "./loadParticles";
 import { buildKeyframes, layoutFor, type Anchors } from "./timeline";
-import type { NexbotEngine, Quality } from "./engine";
+import type { ParticleEngine, Quality } from "./engine";
 
 /** Pinned story ScrollTrigger id — must match the one created on the page. */
 export const STORY_TRIGGER_ID = "story";
+
+/** Particles per device tier (see Quality in engine.ts). */
+const PARTICLE_COUNT: Record<Quality, number> = { 0: 50_000, 1: 100_000, 2: 200_000 };
 
 function supportsWebGL2(): boolean {
   try {
@@ -61,9 +64,10 @@ function readAnchors(): Anchors {
 }
 
 /**
- * Fixed, full-viewport WebGL layer behind the page content. Three.js and the
- * model are fetched only after the page has loaded and the main thread is idle,
- * so the 3D never competes with first paint.
+ * Fixed, full-viewport WebGL layer behind the page content: a particle
+ * sphere that becomes a brain as the story scrolls. three.js and the
+ * particle generation (in a worker) start only once the page has loaded and
+ * the main thread is idle, so the 3D never competes with first paint.
  */
 export function ScrollScene() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -76,13 +80,13 @@ export function ScrollScene() {
     if (nav.connection?.saveData || !supportsWebGL2()) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // 2 = bloom + floor reflections, 1 = bloom, 0 = direct. The engine steps down by itself if needed.
     const cores = navigator.hardwareConcurrency ?? 8;
     const coarse = window.matchMedia("(pointer: coarse)").matches;
     const quality: Quality = cores <= 4 ? 0 : coarse || window.innerWidth < 1024 ? 1 : 2;
 
-    let engine: NexbotEngine | undefined;
+    let engine: ParticleEngine | undefined;
     let disposed = false;
+    const abort = new AbortController();
 
     const applyTimeline = () => {
       if (!engine) return;
@@ -93,15 +97,12 @@ export function ScrollScene() {
 
     const boot = async () => {
       try {
-        const [{ NexbotEngine }, buffer] = await Promise.all([
+        const [{ ParticleEngine }, data] = await Promise.all([
           import("./engine"),
-          fetch(modelUrl).then((r) => {
-            if (!r.ok) throw new Error(`Model request failed: ${r.status}`);
-            return r.arrayBuffer();
-          }),
+          loadParticles(PARTICLE_COUNT[quality], 7, abort.signal),
         ]);
         if (disposed) return;
-        engine = new NexbotEngine(container, {
+        engine = new ParticleEngine(container, {
           reducedMotion,
           quality,
           onContextLost: () => {
@@ -109,7 +110,7 @@ export function ScrollScene() {
             setFailed(true);
           },
         });
-        await engine.load(buffer);
+        await engine.load(data);
         if (disposed) return;
         applyTimeline();
         ScrollTrigger.addEventListener("refresh", applyTimeline);
@@ -126,6 +127,7 @@ export function ScrollScene() {
     const cancelIdle = whenIdle(() => void boot());
     return () => {
       disposed = true;
+      abort.abort();
       cancelIdle();
       ScrollTrigger.removeEventListener("refresh", applyTimeline);
       engine?.dispose();
