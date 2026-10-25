@@ -1,43 +1,57 @@
-import type { ParticleData } from "./particles";
+import { generateBrain, joinBrain, type BrainChunk } from "./particles";
 
 /**
- * Builds the sphere/brain particle targets off the main thread, which takes
- * around half a second for the largest tier. If workers aren't available,
- * it falls back to the main thread.
+ * Builds the brain targets for the given sphere directions, split across
+ * several workers so it finishes in a fraction of the single-thread time.
+ * Falls back to the main thread if workers aren't available.
  */
-export function loadParticles(
-  count: number,
+export function loadBrain(
+  dirs: Float32Array,
   seed = 7,
   signal?: AbortSignal,
-): Promise<ParticleData> {
-  const fallback = () => import("./particles").then((m) => m.generateParticles(count, seed));
+): Promise<Float32Array> {
+  const count = dirs.length / 4;
+  // Leave a core for the main thread; ~25k particles per worker is plenty to amortise start-up.
+  const cores = navigator.hardwareConcurrency || 4;
+  const n = Math.max(1, Math.min(cores - 1, 6, Math.ceil(count / 25_000)));
+  const per = Math.ceil(count / n);
+  const workers: Worker[] = [];
+  const stop = () => workers.forEach((w) => w.terminate());
 
-  return new Promise<ParticleData>((resolve, reject) => {
+  const runChunk = (chunk: number): Promise<BrainChunk> => {
+    const slice = dirs.slice(chunk * per * 4, Math.min(count, (chunk + 1) * per) * 4);
+    const request = { dirs: slice, seed, chunk };
+    const onMain = () => Promise.resolve().then(() => generateBrain(request));
     let worker: Worker;
     try {
       worker = new Worker(new URL("./particles.worker.ts", import.meta.url), { type: "module" });
     } catch {
-      fallback().then(resolve, reject);
-      return;
+      return onMain();
     }
-    const done = () => {
-      worker.terminate();
-      signal?.removeEventListener("abort", onAbort);
-    };
+    workers.push(worker);
+    return new Promise<BrainChunk>((resolve, reject) => {
+      worker.onmessage = (e: MessageEvent<BrainChunk>) => {
+        worker.terminate();
+        resolve(e.data);
+      };
+      worker.onerror = (e) => {
+        e.preventDefault();
+        worker.terminate();
+        onMain().then(resolve, reject);
+      };
+      worker.postMessage(request, [request.dirs.buffer]);
+    });
+  };
+
+  return new Promise<Float32Array>((resolve, reject) => {
     const onAbort = () => {
-      done();
+      stop();
       reject(new DOMException("Aborted", "AbortError"));
     };
+    if (signal?.aborted) return onAbort();
     signal?.addEventListener("abort", onAbort, { once: true });
-    worker.onmessage = (e: MessageEvent<ParticleData>) => {
-      done();
-      resolve(e.data);
-    };
-    worker.onerror = (e) => {
-      e.preventDefault();
-      done();
-      fallback().then(resolve, reject);
-    };
-    worker.postMessage({ count, seed });
+    Promise.all(Array.from({ length: n }, (_, i) => runChunk(i)))
+      .then((chunks) => resolve(joinBrain(chunks)), reject)
+      .finally(() => signal?.removeEventListener("abort", onAbort));
   });
 }

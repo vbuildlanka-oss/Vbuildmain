@@ -17,24 +17,9 @@
  * Coordinates: +x = front, +y = up, ±z = right/left hemisphere. The sphere
  * radius is 1; the brain is about 2 units long.
  *
- * This file has no DOM or three.js dependency. It runs inside a Web Worker
- * (particles.worker.ts) and falls back to the main thread if needed.
+ * This file has no DOM or three.js dependency. The brain stage runs in Web
+ * Workers (particles.worker.ts) and falls back to the main thread if needed.
  */
-
-export interface ParticleData {
-  count: number;
-  /** xyz on the sphere. */
-  sphere: Float32Array;
-  /** xyz on the brain; w = surface brightness (1 = gyrus crest, ~0.2 = deep sulcus). */
-  brain: Float32Array;
-  /** xyz = random unit vector (scatter direction); w = uniform random 0..1. */
-  seed: Float32Array;
-}
-
-export interface ParticleRequest {
-  count: number;
-  seed: number;
-}
 
 // -----------------------------------------------------------------------------
 // Random + noise
@@ -244,7 +229,40 @@ function brainField(x: number, y: number, z: number): number {
 
 // -----------------------------------------------------------------------------
 // Generation
+//
+// Two stages so the sphere can be shown straight away:
+// 1. generateSphere() — cheap (~10 ms for 200k), runs on the main thread.
+//    It also records each particle's direction, which is what pairs it with
+//    its brain point.
+// 2. generateBrain() — the expensive ray march (~4 µs per particle). It runs
+//    on slices of those directions across several workers, and the slices
+//    are joined with joinBrain().
 // -----------------------------------------------------------------------------
+
+export interface SphereData {
+  count: number;
+  /** xyz on the sphere. */
+  sphere: Float32Array;
+  /** xyz = random unit vector (scatter direction); w = uniform random 0..1. */
+  seed: Float32Array;
+  /** xyz = unit direction on the sphere; w = interior fill (0..1) or -1 for a surface particle. */
+  dirs: Float32Array;
+}
+
+export interface BrainChunk {
+  /** xyzw per particle, not yet centred (see joinBrain). */
+  brain: Float32Array;
+  /** minX, minY, minZ, maxX, maxY, maxZ of this chunk. */
+  bounds: Float32Array;
+}
+
+export interface BrainRequest {
+  dirs: Float32Array;
+  /** Seeds the groove noise; must be the same for every chunk. */
+  seed: number;
+  /** Seeds this chunk's jitter, so results don't depend on how the work was split. */
+  chunk: number;
+}
 
 /** How the unit sphere is stretched into the brain's proportions (length, height, width). */
 const STRETCH = [1.0, 0.7, 0.8] as const;
@@ -322,12 +340,54 @@ function sampleSurface(dx: number, dy: number, dz: number) {
   surf.t = t;
 }
 
-export function generateParticles(count: number, seed = 7): ParticleData {
+/** The dust sphere, plus the per-particle directions the brain is built from. */
+export function generateSphere(count: number, seed = 7): SphereData {
   const rand = mulberry32(seed);
-  const noise = createNoise3D(mulberry32(seed * 31 + 17));
   const sphere = new Float32Array(count * 3);
-  const brain = new Float32Array(count * 4);
   const seeds = new Float32Array(count * 4);
+  const dirs = new Float32Array(count * 4);
+
+  for (let i = 0; i < count; i++) {
+    // Uniform direction on the sphere.
+    const u = rand() * 2 - 1;
+    const phi = rand() * Math.PI * 2;
+    const s = Math.sqrt(1 - u * u);
+    const dx = s * Math.cos(phi);
+    const dy = u;
+    const dz = s * Math.sin(phi);
+    const interior = rand() < INTERIOR;
+    const fill = Math.cbrt(rand());
+
+    // A thin, slightly frayed shell (the Spline look) plus a faint core.
+    const shell = 1 + (rand() - 0.5) * 0.035 + Math.pow(rand(), 7) * 0.09;
+    const r = interior ? fill * 0.94 : shell;
+    sphere[i * 3] = dx * r;
+    sphere[i * 3 + 1] = dy * r;
+    sphere[i * 3 + 2] = dz * r;
+
+    dirs[i * 4] = dx;
+    dirs[i * 4 + 1] = dy;
+    dirs[i * 4 + 2] = dz;
+    dirs[i * 4 + 3] = interior ? fill : -1;
+
+    // Scatter direction + per-particle random.
+    const su = rand() * 2 - 1;
+    const sphi = rand() * Math.PI * 2;
+    const ss = Math.sqrt(1 - su * su);
+    seeds[i * 4] = ss * Math.cos(sphi);
+    seeds[i * 4 + 1] = su;
+    seeds[i * 4 + 2] = ss * Math.sin(sphi);
+    seeds[i * 4 + 3] = rand();
+  }
+  return { count, sphere, seed: seeds, dirs };
+}
+
+/** Brain positions for a slice of sphere directions (the expensive part; runs in a worker). */
+export function generateBrain({ dirs, seed, chunk }: BrainRequest): BrainChunk {
+  const count = dirs.length / 4;
+  const rand = mulberry32(seed * 977 + chunk * 7919 + 1);
+  const noise = createNoise3D(mulberry32(seed * 31 + 17));
+  const brain = new Float32Array(count * 4);
 
   /** Groove depth at a surface point (0 = crest, 1 = bottom of a sulcus) for the current part. */
   const grooveAt = (px: number, py: number, pz: number, part: number, lobeGap: number) => {
@@ -358,29 +418,17 @@ export function generateParticles(count: number, seed = 7): ParticleData {
   let maxZ = -Infinity;
 
   for (let i = 0; i < count; i++) {
-    // Uniform direction on the sphere.
-    const u = rand() * 2 - 1;
-    const phi = rand() * Math.PI * 2;
-    const s = Math.sqrt(1 - u * u);
-    const dx = s * Math.cos(phi);
-    const dy = u;
-    const dz = s * Math.sin(phi);
-    const interior = rand() < INTERIOR;
-    const fill = Math.cbrt(rand());
-
-    // Sphere: a thin, slightly frayed shell (the Spline look) plus a faint core.
-    const shell = 1 + (rand() - 0.5) * 0.035 + Math.pow(rand(), 7) * 0.09;
-    const r = interior ? fill * 0.94 : shell;
-    sphere[i * 3] = dx * r;
-    sphere[i * 3 + 1] = dy * r;
-    sphere[i * 3 + 2] = dz * r;
-
+    const dx = dirs[i * 4];
+    const dy = dirs[i * 4 + 1];
+    const dz = dirs[i * 4 + 2];
+    const fill = dirs[i * 4 + 3];
     let px: number;
     let py: number;
     let pz: number;
     let bright: number;
 
-    if (interior) {
+    if (fill >= 0) {
+      // Interior particle: somewhere along the ray inside the volume.
       sampleSurface(dx, dy, dz);
       const k = 0.12 + 0.78 * fill;
       const oz = dz >= 0 ? ORIGIN_Z : -ORIGIN_Z;
@@ -434,26 +482,35 @@ export function generateParticles(count: number, seed = 7): ParticleData {
     if (px > maxX) maxX = px;
     if (py > maxY) maxY = py;
     if (pz > maxZ) maxZ = pz;
-
-    // Scatter direction + per-particle random.
-    const su = rand() * 2 - 1;
-    const sphi = rand() * Math.PI * 2;
-    const ss = Math.sqrt(1 - su * su);
-    seeds[i * 4] = ss * Math.cos(sphi);
-    seeds[i * 4 + 1] = su;
-    seeds[i * 4 + 2] = ss * Math.sin(sphi);
-    seeds[i * 4 + 3] = rand();
   }
 
-  // Centre the brain on the origin so both shapes share a pivot.
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-  const cz = (minZ + maxZ) / 2;
-  for (let i = 0; i < count; i++) {
-    brain[i * 4] -= cx;
-    brain[i * 4 + 1] -= cy;
-    brain[i * 4 + 2] -= cz;
-  }
+  return { brain, bounds: new Float32Array([minX, minY, minZ, maxX, maxY, maxZ]) };
+}
 
-  return { count, sphere, brain, seed: seeds };
+/** Joins the chunks in order and centres the brain on the origin so both shapes share a pivot. */
+export function joinBrain(chunks: BrainChunk[]): Float32Array {
+  const b = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
+  let total = 0;
+  for (const c of chunks) {
+    for (let k = 0; k < 3; k++) {
+      b[k] = Math.min(b[k], c.bounds[k]);
+      b[k + 3] = Math.max(b[k + 3], c.bounds[k + 3]);
+    }
+    total += c.brain.length;
+  }
+  const cx = (b[0] + b[3]) / 2;
+  const cy = (b[1] + b[4]) / 2;
+  const cz = (b[2] + b[5]) / 2;
+  const out = new Float32Array(total);
+  let o = 0;
+  for (const c of chunks) {
+    const src = c.brain;
+    for (let i = 0; i < src.length; i += 4) {
+      out[o++] = src[i] - cx;
+      out[o++] = src[i + 1] - cy;
+      out[o++] = src[i + 2] - cz;
+      out[o++] = src[i + 3];
+    }
+  }
+  return out;
 }

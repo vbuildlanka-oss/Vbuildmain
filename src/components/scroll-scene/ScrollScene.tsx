@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import { loadParticles } from "./loadParticles";
+import { loadBrain } from "./loadParticles";
+import { generateSphere } from "./particles";
 import { buildKeyframes, layoutFor, type Anchors } from "./timeline";
 import type { ParticleEngine, Quality } from "./engine";
 
@@ -19,24 +20,15 @@ function supportsWebGL2(): boolean {
   }
 }
 
-function whenIdle(cb: () => void): () => void {
-  let cancelled = false;
-  let idleId: number | undefined;
-  const hasIdle = typeof window.requestIdleCallback === "function";
-  const run = () => {
-    if (cancelled) return;
-    idleId = hasIdle
-      ? window.requestIdleCallback(cb, { timeout: 1200 })
-      : (window as Window).setTimeout(cb, 150);
-  };
-  if (document.readyState === "complete") run();
-  else window.addEventListener("load", run, { once: true });
+/** Runs `cb` right after the next frame is painted, so the boot work never delays first paint. */
+function afterPaint(cb: () => void): () => void {
+  let raf2 = 0;
+  const raf1 = requestAnimationFrame(() => {
+    raf2 = requestAnimationFrame(cb);
+  });
   return () => {
-    cancelled = true;
-    window.removeEventListener("load", run);
-    if (idleId === undefined) return;
-    if (hasIdle) window.cancelIdleCallback(idleId);
-    else (window as Window).clearTimeout(idleId);
+    cancelAnimationFrame(raf1);
+    cancelAnimationFrame(raf2);
   };
 }
 
@@ -65,9 +57,15 @@ function readAnchors(): Anchors {
 
 /**
  * Fixed, full-viewport WebGL layer behind the page content: a particle
- * sphere that becomes a brain as the story scrolls. three.js and the
- * particle generation (in a worker) start only once the page has loaded and
- * the main thread is idle, so the 3D never competes with first paint.
+ * sphere that becomes a brain as the story scrolls.
+ *
+ * Boot order, tuned so the sphere is on screen as soon as possible:
+ * 1. Right after first paint, three.js starts downloading and the brain
+ *    starts generating, split across workers.
+ * 2. The sphere is cheap, so it's built on the main thread and drawn as soon
+ *    as three.js is ready.
+ * 3. The brain targets are uploaded when they arrive, typically well before
+ *    anyone scrolls to the morph.
  */
 export function ScrollScene() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,10 +95,12 @@ export function ScrollScene() {
 
     const boot = async () => {
       try {
-        const [{ ParticleEngine }, data] = await Promise.all([
-          import("./engine"),
-          loadParticles(PARTICLE_COUNT[quality], 7, abort.signal),
-        ]);
+        const enginePromise = import("./engine");
+        const sphere = generateSphere(PARTICLE_COUNT[quality], 7);
+        const brainPromise = loadBrain(sphere.dirs, 7, abort.signal);
+        // Handled below; this stops an early failure from surfacing as an unhandled rejection.
+        brainPromise.catch(() => {});
+        const { ParticleEngine } = await enginePromise;
         if (disposed) return;
         engine = new ParticleEngine(container, {
           reducedMotion,
@@ -110,11 +110,16 @@ export function ScrollScene() {
             setFailed(true);
           },
         });
-        await engine.load(data);
+        await engine.load(sphere);
         if (disposed) return;
         applyTimeline();
         ScrollTrigger.addEventListener("refresh", applyTimeline);
         engine.start();
+        // The sphere stands on its own; if the brain fails, the morph just never happens.
+        brainPromise.then(
+          (brain) => !disposed && engine?.setBrain(brain),
+          (err) => !disposed && console.warn("[ScrollScene] brain generation failed:", err),
+        );
       } catch (err) {
         if (!disposed) {
           console.warn("[ScrollScene] 3D scene disabled:", err);
@@ -124,11 +129,11 @@ export function ScrollScene() {
       }
     };
 
-    const cancelIdle = whenIdle(() => void boot());
+    const cancelBoot = afterPaint(() => void boot());
     return () => {
       disposed = true;
       abort.abort();
-      cancelIdle();
+      cancelBoot();
       ScrollTrigger.removeEventListener("refresh", applyTimeline);
       engine?.dispose();
     };

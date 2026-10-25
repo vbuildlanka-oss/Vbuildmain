@@ -23,7 +23,7 @@
  */
 import * as THREE from "three";
 
-import type { ParticleData } from "./particles";
+import type { SphereData } from "./particles";
 import {
   BASE_STATE,
   STATE_KEYS,
@@ -277,6 +277,9 @@ export class ParticleEngine {
   private points?: THREE.Points;
   private dust?: THREE.Points;
   private count = 0;
+  /** 0 → 1 once the brain targets have arrived; gates the morph so it can't jump. */
+  private brainIn = 0;
+  private brainReady = false;
   /** Share of particles drawn; lowered when the device can't keep up. */
   private drawShare = 1;
 
@@ -365,11 +368,22 @@ export class ParticleEngine {
   // Setup
   // ---------------------------------------------------------------------------
 
-  async load(data: ParticleData): Promise<void> {
+  /**
+   * Shows the sphere straight away. The brain arrives later through setBrain();
+   * until then each particle's brain target is its own sphere position.
+   */
+  async load(data: SphereData): Promise<void> {
     this.count = data.count;
+    const placeholder = new Float32Array(data.count * 4);
+    for (let i = 0; i < data.count; i++) {
+      placeholder[i * 4] = data.sphere[i * 3];
+      placeholder[i * 4 + 1] = data.sphere[i * 3 + 1];
+      placeholder[i * 4 + 2] = data.sphere[i * 3 + 2];
+      placeholder[i * 4 + 3] = 1;
+    }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(data.sphere, 3));
-    geo.setAttribute("aBrain", new THREE.BufferAttribute(data.brain, 4));
+    geo.setAttribute("aBrain", new THREE.BufferAttribute(placeholder, 4));
     geo.setAttribute("aSeed", new THREE.BufferAttribute(data.seed, 4));
     // Both shapes and the scatter cloud fit in this; skips per-frame bounds work.
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 4);
@@ -426,6 +440,18 @@ export class ParticleEngine {
   // ---------------------------------------------------------------------------
   // Runtime
   // ---------------------------------------------------------------------------
+
+  /** Brain targets (xyzw per particle, same order as the sphere). */
+  setBrain(brain: Float32Array) {
+    const geo = this.points?.geometry;
+    if (!geo || brain.length !== this.count * 4) return;
+    // Upload into the existing buffer rather than swapping attributes (which would orphan it).
+    const attr = geo.getAttribute("aBrain") as THREE.BufferAttribute;
+    (attr.array as Float32Array).set(brain);
+    attr.needsUpdate = true;
+    this.brainReady = true;
+    this.needsRender = true;
+  }
 
   setKeyframes(kfs: Keyframe[]) {
     this.keyframes = kfs;
@@ -571,9 +597,11 @@ export class ParticleEngine {
     if (reduced) {
       this.intro = 1;
       this.time = 12;
+      this.brainIn = this.brainReady ? 1 : 0;
     } else {
       this.time += dt;
-      this.intro = Math.min(1, this.intro + dt / 2.6);
+      this.intro = Math.min(1, this.intro + dt / 1.8);
+      if (this.brainReady) this.brainIn = Math.min(1, this.brainIn + dt / 0.6);
       const p = this.pointer;
       p.x = damp(p.x, p.tx, 9, dt);
       p.y = damp(p.y, p.ty, 9, dt);
@@ -584,7 +612,7 @@ export class ParticleEngine {
     }
 
     const introE = 1 - Math.pow(1 - this.intro, 3);
-    const opacity = c.opacity * smooth(0, 0.35, this.intro);
+    const opacity = c.opacity * smooth(0, 0.25, this.intro);
     const op = opacity.toFixed(3);
     if (this.container.style.opacity !== op) this.container.style.opacity = op;
     // Fully faded out: drop the layer from compositing and skip the GPU entirely.
@@ -599,7 +627,7 @@ export class ParticleEngine {
     this.updateCamera(c, this.time);
 
     this.u.uTime.value = this.time;
-    this.u.uMorph.value = c.morph;
+    this.u.uMorph.value = c.morph * smooth(0, 1, this.brainIn);
     // Intro: the dust gathers into the sphere on load.
     this.u.uScatter.value = Math.max(c.scatter, (1 - introE) * 0.9);
     this.u.uPulse.value = c.pulse;
