@@ -1,12 +1,12 @@
-import { generateParticles, type ParticleRequest } from "./particles";
+import { generateBrain, type BrainRequest } from "./particles";
 
 // The project compiles against the DOM lib, so give the worker scope its minimal shape here.
 const ctx = self as unknown as {
-  onmessage: ((e: MessageEvent<ParticleRequest>) => void) | null;
+  onmessage: ((e: MessageEvent<BrainRequest>) => void) | null;
   postMessage(message: unknown, transfer: Transferable[]): void;
 };
 
 ctx.onmessage = (e) => {
-  const data = generateParticles(e.data.count, e.data.seed);
-  ctx.postMessage(data, [data.sphere.buffer, data.brain.buffer, data.seed.buffer]);
+  const chunk = generateBrain(e.data);
+  ctx.postMessage(chunk, [chunk.brain.buffer, chunk.bounds.buffer]);
 };
