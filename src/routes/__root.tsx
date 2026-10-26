@@ -1,3 +1,4 @@
+import { exitPreview, isPreview } from "@/content/store";
 import { Outlet, Link, createRootRoute, useRouter } from "@tanstack/react-router";
 
 function NotFoundComponent() {
@@ -64,5 +65,22 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      {isPreview() && (
+        <div className="fixed bottom-4 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-3 rounded-full border border-primary/40 bg-background/90 py-1.5 pl-4 pr-1.5 text-xs shadow-2xl backdrop-blur-xl">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          Preview: unpublished changes
+          <button
+            type="button"
+            onClick={exitPreview}
+            className="rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground"
+          >
+            Exit
+          </button>
+        </div>
+      )}
+    </>
+  );
 }

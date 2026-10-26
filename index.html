@@ -13,6 +13,26 @@
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="VBUILD — AI & Software Studio" />
     <meta name="twitter:description" content="Websites, AI agents, and custom software engineered to scale." />
+    <script>
+      // Start loading the site content from Supabase straight away, in parallel with the
+      // JS bundle (src/content/store.ts picks this request up). Vite fills in the values.
+      (function () {
+        var url = "%VITE_SUPABASE_URL%".replace(/\/+$/, "");
+        var key = "%VITE_SUPABASE_ANON_KEY%";
+        if (url.indexOf("http") !== 0 || !key || key.charAt(0) === "%") return;
+        if (/[?&]preview\b/.test(location.search) || sessionStorage.getItem("vbuild:preview")) return;
+        var link = document.createElement("link");
+        link.rel = "preconnect";
+        link.href = url;
+        link.crossOrigin = "anonymous";
+        document.head.appendChild(link);
+        var headers = { apikey: key };
+        if (key.indexOf("eyJ") === 0) headers.Authorization = "Bearer " + key;
+        window.__vbuildContent = fetch(url + "/rest/v1/site_content?id=eq.site&select=data,updated_at", { headers: headers })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .catch(function () { return null; });
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />

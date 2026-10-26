@@ -1,0 +1,61 @@
+# Keeps the free Supabase project from being paused for inactivity.
+#
+# Supabase wants "a few user requests to the database each day". Vercel Cron
+# pings once a day (api/keep-alive.ts); this pings four more times a day by
+# writing a heartbeat through the keep_alive() database function.
+#
+# Needs two repository secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL       e.g. https://abcd1234.supabase.co
+#   SUPABASE_ANON_KEY  the anon / publishable key (it's public anyway; it's in the site's JS)
+# Without them, the job skips quietly.
+#
+# GitHub turns off scheduled workflows in public repos after 60 days without
+# activity. The last step re-enables this workflow on every run, the same API
+# approach the keepalive-workflow action uses. The daily Vercel cron has no
+# such limit, so the project stays covered either way.
+
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::notice::SUPABASE_URL / SUPABASE_ANON_KEY secrets not set yet; skipping."
+            exit 0
+          fi
+          URL="${SUPABASE_URL%/}/rest/v1/rpc/keep_alive"
+          AUTH=()
+          case "$SUPABASE_ANON_KEY" in eyJ*) AUTH=(-H "Authorization: Bearer $SUPABASE_ANON_KEY") ;; esac
+          for attempt in 1 2 3; do
+            STATUS=$(curl -sS -o response.json -w "%{http_code}" -X POST "$URL" \
+              -H "apikey: $SUPABASE_ANON_KEY" "${AUTH[@]}" \
+              -H "Content-Type: application/json" \
+              -d '{"caller":"github-actions"}' || echo 000)
+            echo "Attempt $attempt: HTTP $STATUS $(cat response.json 2>/dev/null)"
+            [ "$STATUS" = "200" ] && exit 0
+            sleep 20
+          done
+          echo "::error::Supabase keep-alive ping failed. Is the project paused? Restore it from the Supabase dashboard."
+          exit 1
+
+      - name: Keep this schedule from being disabled
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/supabase-keep-alive.yml/enable" || true

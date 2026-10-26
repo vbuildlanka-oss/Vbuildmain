@@ -5,12 +5,12 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { Button } from "@/components/ui/button";
-import { projects } from "@/data/site";
+import { getContent, useContent, visibleProjects, whatsappUrl } from "@/content/store";
 import { useSmoothScroll } from "@/lib/use-smooth-scroll";
 
 export const Route = createFileRoute("/work/$slug")({
   loader: ({ params }) => {
-    const project = projects.find((p) => p.slug === params.slug);
+    const project = visibleProjects(getContent()).find((p) => p.slug === params.slug);
     if (!project) throw notFound();
     return { project };
   },
@@ -25,6 +25,8 @@ export const Route = createFileRoute("/work/$slug")({
 function WorkDetail() {
   const { project } = Route.useLoaderData();
   const rootRef = useRef<HTMLDivElement>(null);
+  const content = useContent();
+  const L = content.projectPage;
   useSmoothScroll();
 
   useEffect(() => {
@@ -53,65 +55,65 @@ function WorkDetail() {
     return () => ctx.revert();
   }, []);
 
-  const openWhatsApp = () => window.open("https://wa.me/94719802526", "_blank", "noopener,noreferrer");
+  const openWhatsApp = () => window.open(whatsappUrl(content), "_blank", "noopener,noreferrer");
 
   return (
     <div ref={rootRef} className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-10">
           <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> VBUILD
+            <ArrowLeft className="h-4 w-4" /> {content.settings.siteName}
           </Link>
-          <Button variant="glass" size="sm" onClick={openWhatsApp}>Talk to us <ArrowRight /></Button>
+          <Button variant="glass" size="sm" onClick={openWhatsApp}>{L.headerCta} <ArrowRight /></Button>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-5 py-14 md:px-10 md:py-24 lg:py-32">
         <section data-reveal className="max-w-4xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Selected work</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{L.eyebrow}</p>
           <h1 className="mt-4 font-display text-3xl font-medium leading-[1.05] tracking-[-0.04em] sm:text-4xl md:mt-6 md:text-5xl lg:text-8xl">{project.title}</h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground md:mt-8 md:text-lg md:leading-8">{project.copy}</p>
         </section>
 
         <section data-reveal className="mt-10 overflow-hidden rounded-2xl border border-border md:mt-16 md:rounded-3xl">
-          <img src={project.image} alt={project.title} loading="lazy" width={1280} height={768} className="aspect-[16/9] w-full object-cover" />
+          {project.image && (<img src={project.image} alt={project.title} loading="lazy" width={1280} height={768} className="aspect-[16/9] w-full object-cover" />)}
         </section>
 
         <section className="mt-12 grid gap-8 md:mt-20 md:gap-12 lg:grid-cols-3">
           <article data-reveal className="border-t border-border pt-5 md:pt-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Problem</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{L.problemLabel}</p>
             <p className="mt-3 text-sm leading-7 text-muted-foreground md:mt-4 md:text-base">{project.problem}</p>
           </article>
           <article data-reveal className="border-t border-border pt-5 md:pt-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Solution</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{L.solutionLabel}</p>
             <p className="mt-3 text-sm leading-7 text-muted-foreground md:mt-4 md:text-base">{project.solution}</p>
           </article>
           <article data-reveal className="border-t border-border pt-5 md:pt-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Outcome</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{L.outcomeLabel}</p>
             <p className="mt-3 text-sm leading-7 text-muted-foreground md:mt-4 md:text-base">{project.outcome}</p>
           </article>
         </section>
 
         <section data-reveal className="mt-12 border-t border-border pt-8 md:mt-20 md:pt-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Stack</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{L.stackLabel}</p>
           <div className="mt-4 flex flex-wrap gap-2 md:mt-6">
-            {project.stack.map((t: string) => (
-              <span key={t} className="rounded-full border border-border bg-card/40 px-3 py-1.5 text-xs text-foreground md:px-4 md:py-2">{t}</span>
+            {project.stack.map((t: string, i: number) => (
+              <span key={i} className="rounded-full border border-border bg-card/40 px-3 py-1.5 text-xs text-foreground md:px-4 md:py-2">{t}</span>
             ))}
           </div>
         </section>
 
-        {project.liveUrl && (
+        {project.liveUrl?.trim() && (
           <section data-reveal className="mt-8 md:mt-12">
             <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline md:text-base">
-              Visit live site <ExternalLink className="h-4 w-4" />
+              {L.liveLabel} <ExternalLink className="h-4 w-4" />
             </a>
           </section>
         )}
 
         <section data-reveal className="mt-16 flex flex-col items-start justify-between gap-5 border-t border-border pt-10 sm:flex-row sm:items-center md:mt-24 md:gap-6 md:pt-16">
-          <h3 className="font-display text-2xl font-medium tracking-[-0.04em] sm:text-3xl md:text-4xl">Have a similar challenge?</h3>
-          <Button variant="hero" size="lg" onClick={openWhatsApp}>Start on WhatsApp <ArrowRight /></Button>
+          <h3 className="font-display text-2xl font-medium tracking-[-0.04em] sm:text-3xl md:text-4xl">{L.ctaHeading}</h3>
+          <Button variant="hero" size="lg" onClick={openWhatsApp}>{L.cta} <ArrowRight /></Button>
         </section>
       </main>
     </div>

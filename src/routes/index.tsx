@@ -9,9 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import founderImage from "@/assets/founder-lathurshan.webp";
 import logoImage from "@/assets/vbuild-mark.webp";
-import { services, projects, techStack, faqs } from "@/data/site";
+import { useContent, visibleProjects, whatsappUrl } from "@/content/store";
 import { ScrollScene, STORY_TRIGGER_ID } from "@/components/scroll-scene/ScrollScene";
 
 export const Route = createFileRoute("/")({
@@ -19,41 +18,20 @@ export const Route = createFileRoute("/")({
 });
 
 /**
- * The process story. Each chapter drives a beat of the particle scene in <ScrollScene />
- * (see components/scroll-scene/timeline.ts): sphere bursts → brain takes shape → formed → comes alive.
+ * The process story (content.process.chapters). Each chapter drives a beat of the
+ * particle scene in <ScrollScene /> (see components/scroll-scene/timeline.ts):
+ * sphere bursts → brain takes shape → formed → comes alive.
  */
-const chapters = [
-  {
-    step: "Listen",
-    title: "Every project starts in pieces.",
-    detail:
-      "A half-written brief, a spreadsheet nobody trusts, three opinions on what the product should be. We sit with your team and your users until the pieces start to make sense.",
-  },
-  {
-    step: "Plan",
-    title: "Then we lay it all out.",
-    detail:
-      "Before anyone writes code, every screen, flow and integration is on the table where you can see it. Changing your mind is cheap at this stage, so we encourage it.",
-  },
-  {
-    step: "Build",
-    title: "We put it together, properly.",
-    detail:
-      "Typed, tested, reviewed code, shipped in small steps. You get something you can click every week, not a big reveal at the end.",
-  },
-  {
-    step: "Launch",
-    title: "And then it comes to life.",
-    detail:
-      "We launch it, watch how real people use it and keep tuning. The AI, automations and integrations keep working long after the launch party.",
-  },
-];
-
 function Index() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const lenisRef = useRef<Lenis | null>(null);
+  const content = useContent();
+  const { hero, about, settings, contact } = content;
+  const chapters = content.process.chapters;
+  const services = content.services;
+  const projects = visibleProjects(content);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -232,26 +210,26 @@ function Index() {
     else target.scrollIntoView({ behavior: "smooth" });
   };
   const openContactDialog = () => { setMobileMenuOpen(false); setContactDialogOpen(true); };
-  const openWhatsApp = () => window.open("https://wa.me/94719802526", "_blank", "noopener,noreferrer");
+  const openWhatsApp = () => window.open(whatsappUrl(content), "_blank", "noopener,noreferrer");
 
-  const navLinks: [string, string][] = [["Process", "#process"], ["Services", "#services"], ["Work", "#work"], ["FAQ", "#faq"]];
+  const navLinks: [string, string][] = [[content.nav.process, "#process"], [content.nav.services, "#services"], [content.nav.work, "#work"], [content.nav.faq, "#faq"]];
 
   return (
     <div ref={rootRef} className="min-h-screen overflow-x-clip bg-background text-foreground selection:bg-primary/30">
       <ScrollScene />
       <header className="fixed inset-x-0 top-0 z-50 mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 md:flex md:justify-between md:px-10 md:py-5">
-        <a href="#top" aria-label="VBUILD home" className="glass-panel flex h-12 items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4">
+        <a href="#top" aria-label={`${settings.siteName} home`} className="glass-panel flex h-12 items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4">
           <span className="flex h-9 w-11 items-center justify-center overflow-hidden rounded-full bg-background">
             <img src={logoImage} alt="" className="h-full w-full object-cover" />
           </span>
-          <span className="font-display text-sm font-semibold tracking-[0.16em] text-foreground">VBUILD</span>
+          <span className="font-display text-sm font-semibold tracking-[0.16em] text-foreground">{settings.siteName}</span>
         </a>
         <nav aria-label="Main navigation" className="glass-panel hidden items-center gap-1 rounded-full p-1 md:flex">
           {navLinks.map(([label, href]) => (
             <a key={label} href={href} onClick={(e) => { e.preventDefault(); moveTo(href); }} className="rounded-full px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">{label}</a>
           ))}
         </nav>
-        <Button variant="glass" size="sm" onClick={openContactDialog} className="hidden md:inline-flex">Start a project <ArrowRight /></Button>
+        <Button variant="glass" size="sm" onClick={openContactDialog} className="hidden md:inline-flex">{settings.startProjectLabel} <ArrowRight /></Button>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="glass" size="icon" className="shrink-0 md:hidden" aria-label="Open navigation menu"><Menu /></Button>
@@ -259,7 +237,7 @@ function Index() {
           <SheetContent side="right" className="glass-panel w-[min(88vw,23rem)] border-l border-border bg-background/95 p-6 pt-20 backdrop-blur-2xl">
             <SheetHeader className="text-left">
               <SheetTitle className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-primary">Navigate</SheetTitle>
-              <SheetDescription className="sr-only">Navigate to the main sections of the VBUILD website.</SheetDescription>
+              <SheetDescription className="sr-only">Navigate to the main sections of the website.</SheetDescription>
             </SheetHeader>
             <nav aria-label="Mobile navigation" className="mt-10 flex flex-col">
               {navLinks.map(([label, href]) => (
@@ -269,8 +247,8 @@ function Index() {
                 </button>
               ))}
             </nav>
-            <Button variant="hero" size="lg" onClick={openContactDialog} className="mt-10 w-full">Start a project <ArrowRight /></Button>
-            <p className="absolute bottom-7 left-6 text-xs text-muted-foreground">Toronto · Working globally</p>
+            <Button variant="hero" size="lg" onClick={openContactDialog} className="mt-10 w-full">{settings.startProjectLabel} <ArrowRight /></Button>
+            <p className="absolute bottom-7 left-6 text-xs text-muted-foreground">{settings.menuLocation}</p>
           </SheetContent>
         </Sheet>
       </header>
@@ -282,19 +260,19 @@ function Index() {
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_6%,color-mix(in_oklab,var(--background)_82%,transparent)_34%,transparent_62%),linear-gradient(180deg,color-mix(in_oklab,var(--background)_70%,transparent)_0%,transparent_16%)] lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_78%,transparent)_28%,transparent_55%)]" />
           <div data-hero-copy className="relative z-10 mx-auto w-full max-w-[1440px] will-change-transform">
             <div className="max-w-2xl">
-              <p data-hero-item className="mb-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary md:mb-8"><span className="h-px w-8 bg-primary" /> <span className="hidden sm:inline">VBUILD ·</span> Independent software studio</p>
+              <p data-hero-item className="mb-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary md:mb-8"><span className="h-px w-8 bg-primary" /> <span className="hidden sm:inline">{settings.siteName} ·</span> {hero.eyebrow}</p>
               <h1 data-hero-item className="font-display text-[clamp(2.6rem,6.4vw,6rem)] font-medium leading-[0.95] tracking-[-0.055em]">
-                <span className="sr-only">VBUILD: </span>We build websites, AI agents and software that <span className="text-gradient">scale.</span>
+                <span className="sr-only">{settings.siteName}: </span>{hero.headline} <span className="text-gradient">{hero.headlineAccent}</span>
               </h1>
-              <p data-hero-item className="mt-6 max-w-md text-[15px] leading-7 text-muted-foreground md:mt-8 md:text-base">A small team that designs, builds and looks after the software for you, from the first call to long after launch.</p>
+              <p data-hero-item className="mt-6 max-w-md text-[15px] leading-7 text-muted-foreground md:mt-8 md:text-base">{hero.body}</p>
               <div data-hero-item className="mt-8 flex flex-wrap gap-3 md:mt-10">
-                <Button variant="hero" size="lg" onClick={openContactDialog}>Get in touch <ArrowRight /></Button>
-                <Button variant="glass" size="lg" onClick={() => moveTo("#work")}>View work</Button>
+                <Button variant="hero" size="lg" onClick={openContactDialog}>{hero.primaryCta} <ArrowRight /></Button>
+                <Button variant="glass" size="lg" onClick={() => moveTo("#work")}>{hero.secondaryCta}</Button>
               </div>
             </div>
           </div>
           <button type="button" onClick={() => moveTo("#process")} data-hero-item className="group absolute bottom-6 right-5 z-10 hidden items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-muted-foreground transition-colors hover:text-foreground md:right-10 md:flex">
-            Scroll to explore
+            {hero.scrollCue}
             <span className="relative block h-10 w-px overflow-hidden bg-border"><span className="scroll-cue absolute inset-x-0 top-0 h-1/2 bg-primary" /></span>
           </button>
         </section>
@@ -306,12 +284,12 @@ function Index() {
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_10%,color-mix(in_oklab,var(--background)_80%,transparent)_40%,transparent_66%),linear-gradient(180deg,color-mix(in_oklab,var(--background)_70%,transparent)_0%,transparent_18%)] motion-reduce:hidden lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_72%,transparent)_30%,transparent_56%)]" />
 
             <div className="relative mx-auto flex h-full max-w-[1440px] flex-col px-5 pt-24 md:px-10 md:pt-28 motion-reduce:pb-16">
-              <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary"><span className="h-px w-8 bg-primary" /> How we work</p>
+              <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary"><span className="h-px w-8 bg-primary" /> {content.process.eyebrow}</p>
 
               <div className="relative flex-1 motion-reduce:mt-10 motion-reduce:grid motion-reduce:gap-10 motion-reduce:sm:grid-cols-2">
-                {chapters.map((c) => (
+                {chapters.map((c, i) => (
                   <article
-                    key={c.step}
+                    key={i}
                     data-chapter
                     className="max-w-xl motion-safe:absolute motion-safe:inset-x-0 motion-safe:bottom-24 md:motion-safe:bottom-28 lg:motion-safe:bottom-auto lg:motion-safe:top-1/2 lg:motion-safe:-translate-y-1/2"
                   >
@@ -330,8 +308,8 @@ function Index() {
 
               {/* Where we are in the story — just the words, the active one lights up */}
               <ul aria-hidden="true" className="flex flex-wrap gap-x-6 gap-y-2 pb-8 text-xs text-muted-foreground motion-reduce:hidden md:pb-10">
-                {chapters.map((c) => (
-                  <li key={c.step} data-chapter-mark className="transition-colors duration-500 data-[active=true]:text-foreground">{c.step}</li>
+                {chapters.map((c, i) => (
+                  <li key={i} data-chapter-mark className="transition-colors duration-500 data-[active=true]:text-foreground">{c.step}</li>
                 ))}
               </ul>
             </div>
@@ -342,15 +320,15 @@ function Index() {
         <section id="about" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
           <div className="mx-auto grid max-w-7xl gap-10 md:gap-16 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
             <div data-reveal>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">About</p>
-              <h2 className="max-w-4xl font-display text-3xl font-medium leading-[1.08] tracking-[-0.04em] sm:text-4xl md:text-6xl lg:text-7xl">Small by design.<br /><span className="text-muted-foreground">Ambitious by nature.</span></h2>
-              <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground md:mt-8 md:text-lg md:leading-8">VBUILD partners with forward-thinking teams to turn complex ideas into clear, useful products. Strategy, design, and engineering work as one — from the first sketch to production.</p>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">{about.eyebrow}</p>
+              <h2 className="max-w-4xl font-display text-3xl font-medium leading-[1.08] tracking-[-0.04em] sm:text-4xl md:text-6xl lg:text-7xl">{about.heading}<br /><span className="text-muted-foreground">{about.headingMuted}</span></h2>
+              <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground md:mt-8 md:text-lg md:leading-8">{about.body}</p>
             </div>
             <article data-reveal className="glass-panel overflow-hidden rounded-2xl p-2 md:rounded-3xl md:p-3">
-              <img src={founderImage} alt="Portrait of Lathurshan Muralitharan, founder of VBUILD" loading="lazy" width={1254} height={1254} className="aspect-[4/3] w-full rounded-xl object-cover object-[center_38%] md:rounded-2xl" />
+              <img src={about.founderImage} alt={about.founderImageAlt} loading="lazy" width={1254} height={1254} className="aspect-[4/3] w-full rounded-xl object-cover object-[center_38%] md:rounded-2xl" />
               <div className="flex flex-col gap-2 p-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6 md:p-7">
-                <div><p className="font-display text-lg font-semibold md:text-xl">Lathurshan Muralitharan</p><p className="mt-0.5 text-sm text-muted-foreground">Founder, VBUILD</p></div>
-                <p className="text-xs leading-5 text-muted-foreground sm:max-w-48 sm:text-right">Computer Science Graduate<br />University of Waterloo</p>
+                <div><p className="font-display text-lg font-semibold md:text-xl">{about.founderName}</p><p className="mt-0.5 text-sm text-muted-foreground">{about.founderRole}</p></div>
+                <p className="text-xs leading-5 text-muted-foreground sm:max-w-48 sm:text-right">{about.founderCredentials.split("\n").map((line, i) => <span key={i} className="block">{line}</span>)}</p>
               </div>
             </article>
           </div>
@@ -361,10 +339,10 @@ function Index() {
           <div className="mx-auto max-w-7xl">
             <div data-reveal className="mb-10 grid gap-6 md:mb-14 md:gap-8 lg:grid-cols-[1fr_.55fr] lg:items-end">
               <div>
-                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">Services</p>
-                <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">Built end to end.</h2>
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">{content.servicesSection.eyebrow}</p>
+                <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">{content.servicesSection.heading}</h2>
               </div>
-              <p className="max-w-sm text-sm leading-6 text-muted-foreground">Design, engineering and AI under one roof, so nothing gets lost between agencies. Pick one to see how we approach it.</p>
+              <p className="max-w-sm text-sm leading-6 text-muted-foreground">{content.servicesSection.intro}</p>
             </div>
             <div data-stagger className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               {services.map((s) => (
@@ -377,7 +355,7 @@ function Index() {
                   <h3 className="font-display text-xl font-medium tracking-[-0.03em] sm:text-2xl md:text-3xl">{s.title}</h3>
                   <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground md:mt-4">{s.copy}</p>
                   <span className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary md:mt-8">
-                    Explore <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    {content.servicesSection.cardCta} <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
                 </Link>
               ))}
@@ -389,8 +367,8 @@ function Index() {
         <section id="work" className="section-rule">
           <div className="px-5 pt-16 md:px-10 md:pt-28 lg:pt-36">
             <div data-reveal className="mx-auto max-w-7xl">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">Selected work</p>
-              <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">Systems with a point of view.</h2>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:mb-6">{content.workSection.eyebrow}</p>
+              <h2 className="font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:text-5xl lg:text-7xl">{content.workSection.heading}</h2>
             </div>
           </div>
 
@@ -399,7 +377,7 @@ function Index() {
             {projects.map((p) => (
               <Link key={p.slug} to="/work/$slug" params={{ slug: p.slug }} className="group block">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-muted md:rounded-2xl">
-                  <img src={p.image} alt={p.title} loading="lazy" decoding="async" width={1600} height={893} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 active:scale-[1.02]" />
+                  {p.image && (<img src={p.image} alt={p.title} loading="lazy" decoding="async" width={1600} height={893} className="h-full w-full object-cover transition-[filter,opacity,transform] duration-700 active:scale-[1.02]" />)}
                 </div>
                 <div className="mt-4 md:mt-5">
                   <h3 className="font-display text-xl font-medium tracking-[-0.03em] sm:text-2xl">{p.title}</h3>
@@ -420,14 +398,14 @@ function Index() {
                   params={{ slug: p.slug }}
                   className="group relative block h-[70vh] w-[60vw] shrink-0 overflow-hidden rounded-3xl border border-border bg-card/30"
                 >
-                  <img src={p.image} alt={p.title} loading="lazy" decoding="async" width={1600} height={893} className="absolute inset-0 h-full w-full object-cover opacity-65 grayscale transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 group-hover:grayscale-0" />
+                  {p.image && (<img src={p.image} alt={p.title} loading="lazy" decoding="async" width={1600} height={893} className="absolute inset-0 h-full w-full object-cover opacity-65 grayscale transition-[filter,opacity,transform] duration-700 group-hover:scale-[1.03] group-hover:opacity-100 group-hover:grayscale-0" />)}
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                   <div className="relative flex h-full flex-col justify-end p-10">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-primary">{p.tags.join(" · ")}</p>
                     <h3 className="mt-3 font-display text-4xl font-medium tracking-[-0.04em]">{p.title}</h3>
                     <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">{p.copy}</p>
                     <span className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                      View case <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      {content.workSection.cardCta} <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                   </div>
                 </Link>
@@ -440,12 +418,12 @@ function Index() {
         {/* TECH STACK MARQUEE */}
         <section className="section-rule overflow-hidden py-14 md:py-20 lg:py-28">
           <div data-reveal className="mx-auto mb-8 max-w-7xl px-5 md:mb-10 md:px-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Stack</p>
-            <h2 className="mt-3 font-display text-2xl font-medium tracking-[-0.03em] sm:text-3xl md:mt-4 md:text-5xl">Tools we ship with.</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{content.stack.eyebrow}</p>
+            <h2 className="mt-3 font-display text-2xl font-medium tracking-[-0.03em] sm:text-3xl md:mt-4 md:text-5xl">{content.stack.heading}</h2>
           </div>
           <div className="group relative">
             <div className="vbuild-marquee flex w-max gap-12 will-change-transform group-hover:[animation-play-state:paused]">
-              {[...techStack, ...techStack].map((t, i) => (
+              {[...content.stack.items, ...content.stack.items].map((t, i) => (
                 <span key={`${t}-${i}`} className="font-display text-2xl font-medium text-muted-foreground md:text-4xl">{t}</span>
               ))}
             </div>
@@ -456,12 +434,12 @@ function Index() {
         <section id="faq" className="section-rule px-5 py-16 md:px-10 md:py-28 lg:py-36">
           <div className="mx-auto grid max-w-7xl gap-8 md:gap-16 lg:grid-cols-[.4fr_1fr]">
             <div data-reveal>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">FAQ</p>
-              <h2 className="mt-4 font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:mt-6 md:text-5xl lg:text-7xl">Good questions.</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{content.faq.eyebrow}</p>
+              <h2 className="mt-4 font-display text-3xl font-medium tracking-[-0.04em] sm:text-4xl md:mt-6 md:text-5xl lg:text-7xl">{content.faq.heading}</h2>
             </div>
             <Accordion data-reveal type="single" collapsible className="w-full">
-              {faqs.map((f, i) => (
-                <AccordionItem key={f.q} value={`item-${i}`} className="border-border">
+              {content.faq.items.map((f, i) => (
+                <AccordionItem key={i} value={`item-${i}`} className="border-border">
                   <AccordionTrigger className="py-5 text-left font-display text-base font-medium tracking-[-0.02em] sm:text-lg md:py-6 md:text-xl [&>svg]:hidden group">
                     <span className="flex w-full items-center justify-between gap-3 md:gap-4">
                       {f.q}
@@ -481,22 +459,22 @@ function Index() {
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,var(--background)_18%,color-mix(in_oklab,var(--background)_78%,transparent)_48%,transparent_70%)] lg:bg-[linear-gradient(90deg,var(--background)_0%,color-mix(in_oklab,var(--background)_70%,transparent)_32%,transparent_58%)]" />
           <div data-reveal className="relative mx-auto grid w-full max-w-7xl lg:grid-cols-[1.1fr_.9fr]">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Have a challenge in mind?</p>
-              <h2 className="mt-5 max-w-4xl font-display text-4xl font-medium leading-[0.98] tracking-[-0.04em] sm:text-5xl md:mt-7 lg:text-7xl xl:text-8xl">Let's build what's next.</h2>
-              <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground md:mt-6 md:text-base">Tell us what you're working on. We'll get back to you within a day with honest thoughts on how we'd tackle it.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{contact.eyebrow}</p>
+              <h2 className="mt-5 max-w-4xl font-display text-4xl font-medium leading-[0.98] tracking-[-0.04em] sm:text-5xl md:mt-7 lg:text-7xl xl:text-8xl">{contact.heading}</h2>
+              <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground md:mt-6 md:text-base">{contact.body}</p>
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 md:mt-10">
-                <Button variant="hero" size="lg" onClick={openContactDialog}>Start a project <ArrowRight /></Button>
-                <p className="text-sm text-muted-foreground">Or email <a href="mailto:hello@vbuild.dev" className="text-foreground underline-offset-4 hover:underline">hello@vbuild.dev</a></p>
+                <Button variant="hero" size="lg" onClick={openContactDialog}>{contact.cta} <ArrowRight /></Button>
+                <p className="text-sm text-muted-foreground">{contact.emailPrefix} <a href={`mailto:${settings.email}`} className="text-foreground underline-offset-4 hover:underline">{settings.email}</a></p>
               </div>
             </div>
           </div>
 
           <footer className="relative mx-auto mt-16 grid w-full max-w-7xl gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:grid-cols-3 md:mt-24 md:gap-6 md:pt-7">
-            <p>&copy; 2026 VBUILD. All rights reserved.</p>
-            <p className="sm:text-center">Toronto, Canada &middot; Working globally</p>
+            <p>{settings.copyright}</p>
+            <p className="sm:text-center">{settings.footerLocation}</p>
             <div className="flex items-center gap-5 sm:justify-end">
-              <a aria-label="LinkedIn" href="https://linkedin.com" className="transition-colors hover:text-primary"><Linkedin className="h-4 w-4" /></a>
-              <a aria-label="GitHub" href="https://github.com" className="transition-colors hover:text-primary"><Github className="h-4 w-4" /></a>
+              <a aria-label="LinkedIn" href={settings.linkedin} className="transition-colors hover:text-primary"><Linkedin className="h-4 w-4" /></a>
+              <a aria-label="GitHub" href={settings.github} className="transition-colors hover:text-primary"><Github className="h-4 w-4" /></a>
             </div>
           </footer>
         </section>
@@ -505,10 +483,10 @@ function Index() {
       <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
         <DialogContent className="glass-panel max-w-lg rounded-3xl border-border p-7 md:p-10">
           <DialogHeader className="text-left">
-            <DialogTitle className="font-display text-3xl font-medium tracking-[-0.04em]">Let's start with a conversation.</DialogTitle>
-            <DialogDescription className="pt-4 text-base leading-7 text-muted-foreground">At VBUILD, we believe the best work starts with a conversation. We take the time to understand your specific needs so we can provide a service tailored to you.</DialogDescription>
+            <DialogTitle className="font-display text-3xl font-medium tracking-[-0.04em]">{contact.dialogTitle}</DialogTitle>
+            <DialogDescription className="pt-4 text-base leading-7 text-muted-foreground">{contact.dialogBody}</DialogDescription>
           </DialogHeader>
-          <Button type="button" variant="hero" size="lg" className="mt-4 w-full sm:w-auto" onClick={openWhatsApp}>Chat on WhatsApp <ArrowRight /></Button>
+          <Button type="button" variant="hero" size="lg" className="mt-4 w-full sm:w-auto" onClick={openWhatsApp}>{contact.dialogCta} <ArrowRight /></Button>
         </DialogContent>
       </Dialog>
     </div>
